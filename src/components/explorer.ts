@@ -25,7 +25,7 @@ export function renderExplorer(state: AppState): string {
       <div class="container">
         <p class="section-eyebrow">The jersey</p>
         <h2 class="section-title">Who's on it?</h2>
-        <p class="section-subtitle">Every name below claimed their place. Click any open square to book it.</p>
+        <p class="section-subtitle">Everyone below got there first. Click an open square before someone beats you to it.</p>
 
         <div class="explorer-search">
           <input
@@ -38,7 +38,7 @@ export function renderExplorer(state: AppState): string {
           ${
             query
               ? `<p class="explorer-meta">${matchCount} match${matchCount === 1 ? "" : "es"} for "${escapeHtml(state.searchQuery)}"</p>`
-              : `<p class="explorer-meta">${claimedCount} of ${state.spots.length} spots claimed</p>`
+              : `<p class="explorer-meta">${claimedCount} of ${state.spots.length} spots called</p>`
           }
         </div>
 

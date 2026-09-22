@@ -29,7 +29,7 @@ function freshCampaign(): Campaign {
     id: DEFAULT_EDITION_ID,
     slug: "edition-001",
     name: "Edition 001",
-    description: "200 spots. One jersey. Every claim makes the next one pricier.",
+    description: "200 spots, one jersey. Call dibs before the price climbs.",
     totalSpots: TOTAL_SPOTS,
     tierCounts: TIER_COUNTS,
     pricing: { ...DEFAULT_PRICING_CONFIG },
@@ -201,7 +201,7 @@ export class AppStore {
       return spot && (spot.status === "reserved" || spot.status === "available");
     });
     if (!stillHeld) {
-      const error = "That spot was just claimed by someone else. Pick another one.";
+      const error = "Ooh, close — someone else called dibs on that one first. Try another spot.";
       this.setState({ formErrors: { general: error } });
       return { success: false, error };
     }

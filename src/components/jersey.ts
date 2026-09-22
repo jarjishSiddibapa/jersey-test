@@ -2,16 +2,18 @@ import type { Spot } from "../types";
 import { escapeHtml, initialsOf } from "../utils/formatting";
 import { JERSEY_VIEWBOX } from "../data/spots";
 
-// Jersey silhouette: crew collar, short capped sleeves, a torso that's
-// only modestly taller than it is wide - a real short-sleeve jersey's
-// proportions, not the elongated robe this used to be. A flat hem with
-// gently rounded corners, not a big flared scoop. Coordinates share the
-// 1000x850 space spot geometry is defined in (see data/spots.ts
-// JERSEY_VIEWBOX).
+// Jersey silhouette: a real open V-neck (not a shallow crew scoop), short
+// raglan sleeves, a torso that's only modestly taller than it is wide. A
+// flat hem with gently rounded corners, not a big flared scoop.
+// Coordinates share the 1000x850 space spot geometry is defined in (see
+// data/spots.ts JERSEY_VIEWBOX). The V dips to y=95, comfortably above
+// y=120 where the nearest spots (shoulders) start, so deepening it here
+// can never cut into spot geometry.
 const JERSEY_PATH = [
   "M 300,70",
   "L 420,25",
-  "Q 500,5 580,25",
+  "L 500,95",
+  "L 580,25",
   "L 700,70",
   "L 840,110",
   "L 840,240",
@@ -26,9 +28,9 @@ const JERSEY_PATH = [
   "Z",
 ].join(" ");
 
-// Traces the exact top-collar curve of JERSEY_PATH so the ribbing sits
-// flush against the neckline instead of floating as a separate shape.
-const COLLAR_PATH = "M 420,25 Q 500,5 580,25";
+// Traces the exact V-neck of JERSEY_PATH so the collar ribbing sits flush
+// against the neckline instead of floating as a separate shape.
+const COLLAR_PATH = "M 420,25 L 500,95 L 580,25";
 
 function spotRadius(spot: Spot): number {
   return Math.min(6, Math.round(Math.min(spot.width, spot.height) * 0.12));
@@ -85,12 +87,9 @@ const TIER_LABEL: Record<string, string> = { standard: "Standard", premium: "Pre
 
 /**
  * Everything the jersey draws (gradient defs, silhouette, seams, spots) as
- * bare markup with no wrapping <svg> tag, so it can be embedded inside a
- * larger composition (see character.ts) at whatever position that
- * composition needs, while a standalone caller gets the same content via
- * renderJerseySvg below. Reusing this instead of hand-copying coordinates
- * into a second drawing is what keeps embedded and standalone jerseys
- * pixel-identical.
+ * bare markup with no wrapping <svg> tag, so a future composition could
+ * embed it at any position, while a standalone caller gets the same
+ * content via renderJerseySvg below.
  */
 export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = {}): string {
   const {
@@ -128,10 +127,10 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
       const tierLabel = TIER_LABEL[spot.tier];
       const label =
         spot.status === "claimed"
-          ? `Spot ${spot.id}, ${tierLabel} tier, claimed by ${escapeHtml(spot.buyerName ?? "")}`
+          ? `Spot ${spot.id}, ${tierLabel} tier, dibs called by ${escapeHtml(spot.buyerName ?? "")}`
           : spot.status === "reserved"
-            ? `Spot ${spot.id}, ${tierLabel} tier, being purchased by someone else right now`
-            : `Spot ${spot.id}, ${tierLabel} tier, available`;
+            ? `Spot ${spot.id}, ${tierLabel} tier, someone is calling dibs on this right now`
+            : `Spot ${spot.id}, ${tierLabel} tier, available - call dibs`;
       const spotInteractive = jerseyInteractive && spot.status !== "reserved";
       const accessibilityAttrs = !jerseyInteractive
         ? 'aria-hidden="true"'
@@ -161,15 +160,16 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
       </defs>
       <path d="${JERSEY_PATH}" fill="url(#${gradientId})" />
       <g clip-path="url(#${clipId})">
+        <rect x="140" y="196" width="720" height="10" class="jersey-raglan-trim" />
         <line x1="715" y1="205" x2="715" y2="780" class="jersey-seam" />
         <line x1="285" y1="205" x2="285" y2="780" class="jersey-seam" />
-        <line x1="345" y1="212" x2="655" y2="212" class="jersey-yoke" />
         <rect x="230" y="786" width="540" height="16" class="jersey-hem-stripe" />
       </g>
       <path d="${JERSEY_PATH}" class="jersey-outline" />
+      <path d="${COLLAR_PATH}" class="jersey-collar-trim" />
       <path d="${COLLAR_PATH}" class="jersey-collar" />
       <text x="500" y="660" class="jersey-number" text-anchor="middle">01</text>
-      <text x="762" y="95" class="jersey-mark" text-anchor="start">C</text>
+      <text x="762" y="95" class="jersey-mark" text-anchor="start">D</text>
       <g class="jersey-spots">${spotNodes}</g>`;
 }
 

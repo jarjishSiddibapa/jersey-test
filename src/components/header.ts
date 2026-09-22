@@ -3,8 +3,8 @@ export function renderHeader(): string {
     <header class="site-header">
       <div class="container site-header__inner">
         <a href="#top" class="site-logo">
-          <span class="site-logo__mark">C</span>
-          claim.lol
+          <span class="site-logo__mark">D</span>
+          dibs.lol
         </a>
         <nav class="site-nav" aria-label="Primary">
           <a href="#how-it-works">How it works</a>

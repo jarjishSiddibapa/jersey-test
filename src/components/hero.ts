@@ -1,6 +1,6 @@
 import type { AppState } from "../types";
 import { renderPriceCard } from "./priceCard";
-import { renderCharacterSvg } from "./character";
+import { renderJerseySvg } from "./jersey";
 import { FOUNDING_SPOT_THRESHOLD, getClaimedSpots } from "../services/pricing";
 
 export function renderHero(state: AppState): string {
@@ -8,18 +8,18 @@ export function renderHero(state: AppState): string {
   const claimed = getClaimedSpots(state.spots).length;
 
   const eyebrow = soldOut
-    ? "Edition 001 is sold out"
+    ? "Every spot is spoken for"
     : claimed < FOUNDING_SPOT_THRESHOLD
-      ? "Founding spots are live"
-      : "One jersey. Limited spots. Rising prices.";
+      ? "Founding dibs are still up for grabs"
+      : "One jersey. 200 spots. Calling dibs gets pricier every time.";
 
   const actions = soldOut
     ? `<div class="hero__actions">
-        <button class="btn btn-ghost" data-action="explore-jersey">Explore the jersey</button>
+        <button class="btn btn-ghost" data-action="explore-jersey">See who called it</button>
       </div>`
     : `<div class="hero__actions">
-        <button class="btn btn-accent" data-action="start-claim">Claim a spot</button>
-        <button class="btn btn-ghost" data-action="explore-jersey">Explore the jersey</button>
+        <button class="btn btn-accent" data-action="start-claim">Call dibs</button>
+        <button class="btn btn-ghost" data-action="explore-jersey">See the jersey</button>
       </div>`;
 
   return `
@@ -27,7 +27,7 @@ export function renderHero(state: AppState): string {
       <div class="container">
         <div class="hero__stage">
           <div class="hero__glow" aria-hidden="true"></div>
-          ${renderCharacterSvg(state.spots, {
+          ${renderJerseySvg(state.spots, {
             idPrefix: "hero",
             justClaimedSpotIds: state.claimStep === "success" ? (state.pendingClaim?.spotIds ?? []) : [],
             // decorative only - the interactive jersey (search, hover
@@ -40,12 +40,12 @@ export function renderHero(state: AppState): string {
 
         <div class="hero__copy">
           <p class="hero__eyebrow"><span class="live-dot"></span> ${eyebrow}</p>
-          <h1 class="hero__title">${soldOut ? "Every spot has been claimed." : "Own a spot on the jersey."}</h1>
+          <h1 class="hero__title">${soldOut ? "Every spot has been called." : "Call dibs on the jersey."}</h1>
           <p class="hero__subtitle">
             ${
               soldOut
-                ? "Every spot on this jersey is taken. Explore who's on it."
-                : "200 spots. Every claim makes the next one pricier."
+                ? "All 200 spots are taken. Come see who got there first."
+                : "200 spots, one jersey. The longer you wait, the more the next spot costs."
             }
           </p>
           ${actions}

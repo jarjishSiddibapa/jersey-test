@@ -24,7 +24,7 @@ export function renderSpotProfile(state: AppState): string {
       <h3 class="spot-profile__name">${escapeHtml(spot.buyerName ?? "")}</h3>
       ${spot.tagline ? `<p class="spot-page__tagline">${escapeHtml(spot.tagline)}</p>` : ""}
       <p class="spot-profile__meta">
-        Claim #${spot.purchaseRank ?? "-"} &middot; Paid ${formatPrice(spot.pricePaid ?? 0, state.campaign.pricing.currency)}
+        Dibs #${spot.purchaseRank ?? "-"} &middot; Paid ${formatPrice(spot.pricePaid ?? 0, state.campaign.pricing.currency)}
         ${spot.isDemo ? " &middot; Demo data" : ""}
       </p>
       ${

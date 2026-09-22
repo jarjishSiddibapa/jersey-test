@@ -257,10 +257,10 @@ textarea {
   pointer-events: none;
 }
 
-.hero__stage .character-svg {
+.hero__stage .jersey-svg {
   position: relative;
   z-index: 1;
-  width: min(100%, 360px);
+  width: min(100%, 480px);
   filter: drop-shadow(0 24px 40px rgba(17, 17, 17, 0.16));
 }
 
@@ -1598,8 +1598,8 @@ textarea {
     max-width: 860px;
   }
 
-  .hero__stage .character-svg {
-    width: min(100%, 440px);
+  .hero__stage .jersey-svg {
+    width: min(100%, 560px);
   }
 }
 

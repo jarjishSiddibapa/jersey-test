@@ -14,20 +14,20 @@ export function renderPriceCard(state: AppState): string {
     <div class="price-card">
       <div class="price-card__row">
         <div>
-          <p class="price-card__block-label">Current base price</p>
+          <p class="price-card__block-label">Going rate now</p>
           <div class="price-card__today-value">${formatPrice(current, state.campaign.pricing.currency)}</div>
         </div>
         <div>
-          <p class="price-card__block-label">Next base price</p>
+          <p class="price-card__block-label">Next person pays</p>
           <div class="price-card__tomorrow-value">${formatPrice(next, state.campaign.pricing.currency)}</div>
         </div>
       </div>
-      <p class="price-card__growth-label">+${growthPct}% after every claim &middot; Standard/Premium/Hero multiply this base price</p>
+      <p class="price-card__growth-label">+${growthPct}% every time someone calls dibs &middot; Standard/Premium/Hero multiply this rate</p>
       <div class="price-card__divider"></div>
       <div class="price-card__progress-track">
         <div class="price-card__progress-fill" style="width:${pct}%"></div>
       </div>
-      <p class="price-card__progress-label">${claimed} / ${total} spots claimed &middot; ${total - claimed} remaining</p>
+      <p class="price-card__progress-label">${claimed} / ${total} spots called &middot; ${total - claimed} still up for grabs</p>
     </div>
   `;
 }

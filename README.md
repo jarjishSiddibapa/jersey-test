@@ -1,4 +1,4 @@
-# claim.lol
+# dibs.lol
 
 200 spots. One jersey. Every claim makes the next one pricier.
 

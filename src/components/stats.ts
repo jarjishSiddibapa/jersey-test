@@ -13,19 +13,19 @@ export function renderStats(state: AppState): string {
       <div class="container stats-strip__inner">
         <div class="stat-item">
           <div class="stat-item__value">${total}</div>
-          <div class="stat-item__label">Total spots</div>
+          <div class="stat-item__label">Spots on the jersey</div>
         </div>
         <div class="stat-item">
           <div class="stat-item__value stat-item__value--accent">${claimed}</div>
-          <div class="stat-item__label">Claimed</div>
+          <div class="stat-item__label">Dibs called</div>
         </div>
         <div class="stat-item">
           <div class="stat-item__value">${remaining}</div>
-          <div class="stat-item__label">Remaining</div>
+          <div class="stat-item__label">Still up for grabs</div>
         </div>
         <div class="stat-item">
           <div class="stat-item__value stat-item__value--accent">${formatPrice(price, state.campaign.pricing.currency)}</div>
-          <div class="stat-item__label">Current base price</div>
+          <div class="stat-item__label">Going rate right now</div>
         </div>
       </div>
     </div>

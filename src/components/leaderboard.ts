@@ -28,7 +28,7 @@ export function renderLeaderboard(state: AppState): string {
         </div>`,
         )
         .join("")
-    : `<p class="activity-empty">No claims yet.</p>`;
+    : `<p class="activity-empty">Nobody's called dibs yet.</p>`;
 
   const earliestRows = earliest.length
     ? earliest
@@ -37,25 +37,25 @@ export function renderLeaderboard(state: AppState): string {
         <div class="leaderboard-row">
           <span class="leaderboard-rank">${String(i + 1).padStart(2, "0")}</span>
           <span class="leaderboard-name">${escapeHtml(spot.buyerName ?? "")}</span>
-          <span class="leaderboard-count">Claim #${spot.purchaseRank ?? "-"}</span>
+          <span class="leaderboard-count">Dibs #${spot.purchaseRank ?? "-"}</span>
         </div>`,
         )
         .join("")
-    : `<p class="activity-empty">No claims yet.</p>`;
+    : `<p class="activity-empty">Nobody's called dibs yet.</p>`;
 
   return `
     <section class="section" id="leaderboard">
       <div class="container">
-        <p class="section-eyebrow">Jersey board</p>
-        <h2 class="section-title">The jersey board</h2>
-        <p class="section-subtitle">Ranked by participation, not by how much anyone spent.</p>
+        <p class="section-eyebrow">Leaderboard</p>
+        <h2 class="section-title">Hall of dibs</h2>
+        <p class="section-subtitle">Ranked by how many spots you've called, not by how much you spent.</p>
         <div class="leaderboard-grid">
           <div class="leaderboard-panel">
-            <p class="leaderboard-panel__title">Most spots claimed</p>
+            <p class="leaderboard-panel__title">Most spots called</p>
             ${countRows}
           </div>
           <div class="leaderboard-panel">
-            <p class="leaderboard-panel__title">Earliest members</p>
+            <p class="leaderboard-panel__title">Called dibs first</p>
             ${earliestRows}
           </div>
         </div>

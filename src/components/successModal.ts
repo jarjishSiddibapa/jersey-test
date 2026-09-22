@@ -16,17 +16,17 @@ export function renderSuccessPanel(state: AppState): string {
       <button class="panel__close" data-action="close-claim" aria-label="Close">&times;</button>
 
       <div class="success-mark">&#10003;</div>
-      <h2 class="success-title">You're on the jersey.</h2>
+      <h2 class="success-title">Dibs called.</h2>
       <p class="success-detail">
-        You booked <strong>Spot #${spot.id}</strong> for <strong>${formatPrice(price, state.campaign.pricing.currency)}</strong>.
-        It's live on the public jersey now.
+        Spot <strong>#${spot.id}</strong> is yours for <strong>${formatPrice(price, state.campaign.pricing.currency)}</strong>.
+        It's already live on the jersey - go take a look.
       </p>
 
       ${isFounding ? `<div class="spot-profile__founding">Founding member</div>` : ""}
 
       <div class="share-card">
-        <p class="share-card__eyebrow">claim.lol</p>
-        <p class="share-card__title">I just got on the jersey.</p>
+        <p class="share-card__eyebrow">dibs.lol</p>
+        <p class="share-card__title">I just called dibs on the jersey.</p>
         <div class="share-card__row">
           <span>Spot #${spot.id}</span>
           <span>Paid ${formatPrice(price, state.campaign.pricing.currency)}</span>
@@ -35,9 +35,9 @@ export function renderSuccessPanel(state: AppState): string {
 
       <div class="success-actions">
         <button class="btn btn-ghost btn-block" data-action="view-my-spot">View my spot</button>
-        <button class="btn btn-primary btn-block" data-action="share-spot">Share it</button>
+        <button class="btn btn-primary btn-block" data-action="share-spot">Brag about it</button>
       </div>
-      <p class="success-note">You got in before the price went up.</p>
+      <p class="success-note">You beat the price hike. Everyone after you pays more.</p>
       <p class="copy-toast" data-role="copy-toast" style="display:none">Copied &#10003;</p>
     </div>
   `;

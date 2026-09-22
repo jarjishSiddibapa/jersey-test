@@ -39,17 +39,17 @@ window.addEventListener("hashchange", () => store.setRoute(parseHash()));
 function updateMetaTags(): void {
   const state = store.getState();
   const route = state.route;
-  let title = "claim.lol — claim a spot on the jersey";
-  let description = "200 spots on one jersey. Every claim makes the next one pricier.";
+  let title = "dibs.lol — call dibs on the jersey";
+  let description = "200 spots, one jersey. Call dibs before the price climbs.";
 
   if (route.name === "spot") {
     const spot = state.spots.find((s) => s.id === route.id);
     if (spot?.status === "claimed") {
-      title = `Spot #${spot.id} — claim.lol`;
-      description = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on claim.lol.`;
+      title = `Spot #${spot.id} — dibs.lol`;
+      description = `${spot.buyerName ?? "Someone"} called dibs on Spot #${spot.id}.`;
     }
   } else if (route.name === "legal") {
-    title = `${route.slug} — claim.lol`;
+    title = `${route.slug} — dibs.lol`;
   }
 
   document.title = title;
@@ -102,13 +102,13 @@ function renderStickyCta(): string {
   if (state.route.name !== "home") return "";
   const remaining = getRemainingSpotCount(state.spots);
   if (remaining === 0) {
-    return `<div class="sticky-cta"><span class="sticky-cta__price">The jersey is full</span></div>`;
+    return `<div class="sticky-cta"><span class="sticky-cta__price">Every spot's called. Sold out.</span></div>`;
   }
   const price = getCurrentBasePrice(state.campaign.pricing, state.spots);
   return `
     <div class="sticky-cta">
-      <span class="sticky-cta__price">Current: <span>${formatPrice(price, state.campaign.pricing.currency)}</span></span>
-      <button class="btn btn-accent" data-action="start-claim">Claim a spot</button>
+      <span class="sticky-cta__price">Going for: <span>${formatPrice(price, state.campaign.pricing.currency)}</span></span>
+      <button class="btn btn-accent" data-action="start-claim">Call dibs</button>
     </div>
   `;
 }
@@ -209,12 +209,12 @@ function showTooltip(target: SVGGElement, clientX: number, clientY: number): voi
     tip.innerHTML = `
       <div class="spot-tooltip__title">Spot #${spot.id} &middot; ${TIER_LABEL[spot.tier]}</div>
       <div class="spot-tooltip__price">${formatPrice(price * multiplier, state.campaign.pricing.currency)}</div>
-      <div class="spot-tooltip__sub">Click to claim</div>
+      <div class="spot-tooltip__sub">Click to call dibs</div>
     `;
   } else if (spot.status === "reserved") {
     tip.innerHTML = `
       <div class="spot-tooltip__title">Spot #${spot.id}</div>
-      <div class="spot-tooltip__sub">Someone is checking out right now</div>
+      <div class="spot-tooltip__sub">Someone's calling dibs on this right now</div>
     `;
   } else {
     tip.innerHTML = `
@@ -501,7 +501,7 @@ async function copyOrShare(message: string, url: string): Promise<void> {
   const shareText = `${message} ${url}`;
   if (navigator.share) {
     try {
-      await navigator.share({ text: message, url, title: "claim.lol" });
+      await navigator.share({ text: message, url, title: "dibs.lol" });
       return;
     } catch {
       // user cancelled the native share sheet; fall through to clipboard
@@ -528,7 +528,7 @@ async function handleShare(): Promise<void> {
   const spot = state.spots.find((s) => s.id === spotId);
   if (!spot) return;
 
-  const message = `I just claimed Spot #${spot.id} on claim.lol.`;
+  const message = `I just called dibs on Spot #${spot.id} on dibs.lol.`;
   await copyOrShare(message, spotPublicUrl(spot.id));
   analytics.track("spot_shared", { spotId: spot.id });
 }
@@ -537,7 +537,7 @@ async function handleSpotPageShare(spotId: number): Promise<void> {
   const state = store.getState();
   const spot = state.spots.find((s) => s.id === spotId);
   if (!spot) return;
-  const message = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on claim.lol.`;
+  const message = `${spot.buyerName ?? "Someone"} called dibs on Spot #${spot.id}.`;
   await copyOrShare(message, spotPublicUrl(spot.id));
   analytics.track("spot_shared", { spotId });
 }

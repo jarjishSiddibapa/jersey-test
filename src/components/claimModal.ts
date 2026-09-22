@@ -44,7 +44,7 @@ export function renderClaimForm(state: AppState): string {
   return `
     <div class="panel" data-role="claim-panel">
       <button class="panel__close" data-action="close-claim" aria-label="Close">&times;</button>
-      <h2 class="panel__title">Claim Spot #${spotId}</h2>
+      <h2 class="panel__title">Dibs on Spot #${spotId}</h2>
 
       <div class="panel__preview">
         ${renderJerseySvg(preview, { idPrefix: "preview", selectedSpotIds: claim.spotIds, interactive: false })}
@@ -55,13 +55,13 @@ export function renderClaimForm(state: AppState): string {
           <div class="claim-price-box__label">Price</div>
           <div class="claim-price-box__value">${formatPrice(total, state.campaign.pricing.currency)}</div>
         </div>
-        <div class="claim-price-box__label">Locked in the moment you book</div>
+        <div class="claim-price-box__label">Locked in the second you call it</div>
       </div>
 
       <ul class="claim-checklist">
-        <li>Your name/logo, displayed publicly</li>
-        <li>A public spot page you can share</li>
-        <li>Displayed for Edition 001's lifetime, subject to moderation</li>
+        <li>Your name or logo, front and center for everyone to see</li>
+        <li>Your own shareable spot page</li>
+        <li>Bragging rights for as long as Edition 001 lives</li>
       </ul>
 
       <form data-role="claim-form">
@@ -101,7 +101,7 @@ export function renderClaimForm(state: AppState): string {
         </label>
         ${errorFor(state, "agreedToTerms")}
         ${errorFor(state, "general")}
-        <button type="submit" class="btn btn-primary btn-block">Book Spot #${spotId} &middot; ${formatPrice(total, state.campaign.pricing.currency)}</button>
+        <button type="submit" class="btn btn-primary btn-block">Call dibs on #${spotId} &middot; ${formatPrice(total, state.campaign.pricing.currency)}</button>
       </form>
     </div>
   `;
