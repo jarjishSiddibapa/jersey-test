@@ -2,31 +2,33 @@ import type { Spot } from "../types";
 import { escapeHtml, initialsOf } from "../utils/formatting";
 import { JERSEY_VIEWBOX } from "../data/spots";
 
-// Jersey silhouette: crew collar, capped sleeves, a torso that's properly
-// taller than it is wide (a real garment, not a wide/squat box), with a
-// slightly flared hem. Coordinates share the 1000x1150 space spot
-// geometry is defined in (see data/spots.ts JERSEY_VIEWBOX).
+// Jersey silhouette: crew collar, short capped sleeves, a torso that's
+// only modestly taller than it is wide - a real short-sleeve jersey's
+// proportions, not the elongated robe this used to be. A flat hem with
+// gently rounded corners, not a big flared scoop. Coordinates share the
+// 1000x850 space spot geometry is defined in (see data/spots.ts
+// JERSEY_VIEWBOX).
 const JERSEY_PATH = [
-  "M 300,90",
-  "L 430,25",
-  "Q 500,5 570,25",
-  "L 700,90",
-  "L 860,140",
-  "L 860,330",
-  "L 720,290",
-  "L 745,1000",
-  "Q 738,1040 700,1040",
-  "L 300,1040",
-  "Q 262,1040 255,1000",
-  "L 280,290",
-  "L 140,330",
-  "L 140,140",
+  "M 300,70",
+  "L 420,25",
+  "Q 500,5 580,25",
+  "L 700,70",
+  "L 840,110",
+  "L 840,240",
+  "L 715,205",
+  "L 715,780",
+  "Q 712,815 680,815",
+  "L 320,815",
+  "Q 288,815 285,780",
+  "L 285,205",
+  "L 160,240",
+  "L 160,110",
   "Z",
 ].join(" ");
 
 // Traces the exact top-collar curve of JERSEY_PATH so the ribbing sits
 // flush against the neckline instead of floating as a separate shape.
-const COLLAR_PATH = "M 430,25 Q 500,5 570,25";
+const COLLAR_PATH = "M 420,25 Q 500,5 580,25";
 
 function spotRadius(spot: Spot): number {
   return Math.min(6, Math.round(Math.min(spot.width, spot.height) * 0.12));
@@ -137,15 +139,15 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
       </defs>
       <path d="${JERSEY_PATH}" fill="url(#${gradientId})" />
       <g clip-path="url(#${clipId})">
-        <line x1="720" y1="290" x2="745" y2="1000" class="jersey-seam" />
-        <line x1="280" y1="290" x2="255" y2="1000" class="jersey-seam" />
-        <line x1="340" y1="165" x2="660" y2="165" class="jersey-yoke" />
-        <rect x="200" y="985" width="600" height="18" class="jersey-hem-stripe" />
+        <line x1="715" y1="205" x2="715" y2="780" class="jersey-seam" />
+        <line x1="285" y1="205" x2="285" y2="780" class="jersey-seam" />
+        <line x1="345" y1="212" x2="655" y2="212" class="jersey-yoke" />
+        <rect x="230" y="786" width="540" height="16" class="jersey-hem-stripe" />
       </g>
       <path d="${JERSEY_PATH}" class="jersey-outline" />
       <path d="${COLLAR_PATH}" class="jersey-collar" />
-      <text x="500" y="900" class="jersey-number" text-anchor="middle">01</text>
-      <text x="752" y="130" class="jersey-mark" text-anchor="start">IJ</text>
+      <text x="500" y="660" class="jersey-number" text-anchor="middle">01</text>
+      <text x="762" y="95" class="jersey-mark" text-anchor="start">IJ</text>
       <g class="jersey-spots">${spotNodes}</g>
     </svg>`;
 }

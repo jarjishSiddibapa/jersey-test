@@ -1,12 +1,13 @@
 import type { Spot, SpotRegion } from "../types";
 
 /**
- * Jersey artwork coordinate system: 0-1000 wide, 0-1150 tall - a proper
- * portrait garment proportion (torso taller than it is wide), not the
- * wide/squat 1000x700 box this used to be. Kept in sync with the
+ * Jersey artwork coordinate system: 0-1000 wide, 0-850 tall - a real
+ * short-sleeve jersey proportion (torso only modestly taller than it is
+ * wide, like an actual garment product photo), not the elongated
+ * robe-like 1000x1150 box this used to be. Kept in sync with the
  * silhouette path drawn in components/jersey.ts.
  */
-export const JERSEY_VIEWBOX = { width: 1000, height: 1150 };
+export const JERSEY_VIEWBOX = { width: 1000, height: 850 };
 
 interface RegionBounds {
   region: SpotRegion;
@@ -18,19 +19,22 @@ interface RegionBounds {
 }
 
 // Bounding boxes sit safely inside the jersey silhouette (see jersey.ts),
-// leaving margin so the mosaic never crosses collar, armpit or hem edges.
-// The "lower" region in particular stops well above the hem stripe
-// (which sits at y 985-1001) so that decoration never overlaps spots.
+// each with a verified margin so the mosaic never crosses the collar,
+// shoulder, underarm or hem edges. The shoulder/sleeve band lives in the
+// y=118-198 zone, which is the full raglan-width span (160-840) before
+// the underarm cut starts narrowing the shape at y=205. The chest/lower
+// regions sit inside the constant-width torso column (285-715), and the
+// lower region stops well above the hem stripe.
 const REGIONS: RegionBounds[] = [
-  { region: "shoulder", x0: 300, y0: 96, x1: 418, y1: 158, count: 15 },
-  { region: "shoulder", x0: 582, y0: 96, x1: 700, y1: 158, count: 15 },
-  { region: "sleeve", x0: 158, y0: 158, x1: 268, y1: 308, count: 25 },
-  { region: "sleeve", x0: 732, y0: 158, x1: 842, y1: 308, count: 25 },
-  { region: "chest", x0: 322, y0: 178, x1: 678, y1: 478, count: 110 },
-  { region: "lower", x0: 292, y0: 498, x1: 708, y1: 958, count: 110 },
+  { region: "shoulder", x0: 302, y0: 118, x1: 462, y1: 198, count: 10 },
+  { region: "shoulder", x0: 538, y0: 118, x1: 698, y1: 198, count: 10 },
+  { region: "sleeve", x0: 172, y0: 118, x1: 272, y1: 198, count: 17 },
+  { region: "sleeve", x0: 728, y0: 118, x1: 828, y1: 198, count: 17 },
+  { region: "chest", x0: 305, y0: 225, x1: 695, y1: 470, count: 72 },
+  { region: "lower", x0: 305, y0: 490, x1: 695, y1: 758, count: 74 },
 ];
 
-const GAP = 9;
+const GAP = 10;
 
 /**
  * Tiles a region into a brick-like mosaic of rects. Row counts are varied
