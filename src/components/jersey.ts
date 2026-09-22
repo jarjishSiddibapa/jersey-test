@@ -114,6 +114,8 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
     })
     .join("");
 
+  const gradientId = `${idPrefix}-jersey-gradient`;
+
   return `<svg
       class="jersey-svg"
       viewBox="0 0 ${JERSEY_VIEWBOX.width} ${JERSEY_VIEWBOX.height}"
@@ -125,10 +127,18 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
         <clipPath id="${clipId}">
           <path d="${JERSEY_PATH}" />
         </clipPath>
+        <linearGradient id="${gradientId}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#24262a" />
+          <stop offset="55%" stop-color="#18191c" />
+          <stop offset="100%" stop-color="#0f1011" />
+        </linearGradient>
       </defs>
-      <path d="${JERSEY_PATH}" class="jersey-base" />
+      <path d="${JERSEY_PATH}" fill="url(#${gradientId})" />
       <g clip-path="url(#${clipId})">
-        <rect x="100" y="600" width="800" height="14" class="jersey-hem-stripe" />
+        <line x1="762" y1="232" x2="790" y2="608" class="jersey-seam" />
+        <line x1="238" y1="232" x2="210" y2="608" class="jersey-seam" />
+        <line x1="304" y1="136" x2="696" y2="136" class="jersey-yoke" />
+        <rect x="100" y="598" width="800" height="18" class="jersey-hem-stripe" />
       </g>
       <path d="${JERSEY_PATH}" class="jersey-outline" />
       <path d="${COLLAR_PATH}" class="jersey-collar" />

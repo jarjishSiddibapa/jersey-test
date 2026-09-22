@@ -4,18 +4,25 @@
   overflow: visible;
 }
 
-.jersey-base {
-  fill: #1a1b1d;
-}
-
 .jersey-hem-stripe {
   fill: var(--color-accent);
-  opacity: 0.9;
+}
+
+.jersey-seam {
+  stroke: rgba(183, 255, 0, 0.32);
+  stroke-width: 2;
+}
+
+.jersey-yoke {
+  stroke: rgba(183, 255, 0, 0.4);
+  stroke-width: 2;
+  stroke-dasharray: 3 7;
+  stroke-linecap: round;
 }
 
 .jersey-outline {
   fill: none;
-  stroke: rgba(247, 247, 242, 0.14);
+  stroke: rgba(247, 247, 242, 0.16);
   stroke-width: 2.5;
   stroke-linejoin: round;
 }
@@ -23,9 +30,8 @@
 .jersey-collar {
   fill: none;
   stroke: var(--color-accent);
-  stroke-width: 4;
+  stroke-width: 5;
   stroke-linecap: round;
-  opacity: 0.9;
 }
 
 .jersey-number {
@@ -51,7 +57,7 @@
 
 .jersey-spot-shape {
   fill: transparent;
-  stroke: rgba(247, 247, 242, 0.035);
+  stroke: rgba(247, 247, 242, 0.09);
   stroke-width: 1;
   transition: fill 160ms var(--ease), stroke 160ms var(--ease), transform 160ms var(--ease);
   transform-box: fill-box;
@@ -133,38 +139,7 @@
   letter-spacing: -0.01em;
 }
 
-/* ---- character ---- */
-
-.character-svg {
-  width: 100%;
-  height: auto;
-  overflow: visible;
-}
-
-.character-head,
-.character-neck,
-.character-leg,
-.character-shoe {
-  fill: #1c1d1f;
-}
-
-.character-shoe {
-  fill: #f2f2ec;
-}
-
-.character-shoe-sole {
-  fill: #111111;
-}
-
-.character-shorts {
-  fill: #202124;
-}
-
-.character-shadow {
-  fill: rgba(17, 17, 17, 0.08);
-}
-
-/* selection mode pulse on hero character jersey */
+/* selection mode pulse on hero jersey */
 
 .jersey-spots-pulse .jersey-spot--available.jersey-spot--selectable .jersey-spot-shape {
   animation: pulse-available 1.8s ease-in-out infinite;

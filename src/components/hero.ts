@@ -1,6 +1,6 @@
 import type { AppState } from "../types";
 import { renderPriceCard } from "./priceCard";
-import { renderCharacterSvg } from "./character";
+import { renderJerseySvg } from "./jersey";
 import { getCurrentDay, getRemainingSpotCount } from "../services/pricing";
 
 export function renderHero(state: AppState, now: number): string {
@@ -25,11 +25,21 @@ export function renderHero(state: AppState, now: number): string {
 
   return `
     <section class="hero" id="top">
-      <div class="container hero__grid">
-        <div class="hero__text">
+      <div class="container">
+        <div class="hero__stage">
+          <div class="hero__glow" aria-hidden="true"></div>
+          ${renderJerseySvg(state.spots, {
+            idPrefix: "hero",
+            selectionMode: false,
+            selectedSpotId: state.selectedSpotId,
+            justClaimedSpotId: state.lastPurchasedSpotId,
+          })}
+        </div>
+
+        <div class="hero__copy">
           <p class="hero__eyebrow"><span class="live-dot"></span> ${eyebrow}</p>
           <h1 class="hero__title">${
-            soldOut ? "Every spot has<br/>been claimed." : "Own a tiny piece<br/>of the internet."
+            soldOut ? "Every spot has been claimed." : "Own a tiny piece of the internet."
           }</h1>
           <p class="hero__subtitle">
             ${
@@ -39,14 +49,10 @@ export function renderHero(state: AppState, now: number): string {
             }
           </p>
           ${actions}
-          ${renderPriceCard(state, now)}
         </div>
-        <div class="hero__visual">
-          ${renderCharacterSvg(state.spots, {
-            selectionMode: false,
-            selectedSpotId: state.selectedSpotId,
-            justClaimedSpotId: state.lastPurchasedSpotId,
-          })}
+
+        <div class="hero__price">
+          ${renderPriceCard(state, now)}
         </div>
       </div>
     </section>
