@@ -3,7 +3,7 @@ import "./styles/jersey.css";
 
 import { store } from "./state/appState";
 import { getCurrentBasePrice, getRemainingSpotCount } from "./services/pricing";
-import { formatPrice } from "./utils/formatting";
+import { formatPrice, escapeHtml } from "./utils/formatting";
 import { processLogoFile, validateLogoFile } from "./utils/imageProcessing";
 import { parseHash } from "./router";
 import { spotPublicUrl } from "./services/urls";
@@ -130,10 +130,19 @@ function render(): void {
   const state = store.getState();
   const price = getCurrentBasePrice(state.campaign.pricing, state.spots);
 
+  // Every text field in the claim form is synced to store state on every
+  // keystroke (see the "input" listener below), not just on submit - so a
+  // re-render triggered mid-form (e.g. the async logo upload finishing)
+  // never wipes what's already been typed. That means this render() can
+  // run while a form field is focused, so it has to restore focus (and
+  // cursor position) to whatever data-role element had it, generalized
+  // beyond just the search box.
   const active = document.activeElement as HTMLInputElement | null;
-  const wasSearchFocused = active?.getAttribute("data-role") === "search-input";
-  const selStart = wasSearchFocused ? active!.selectionStart : null;
-  const selEnd = wasSearchFocused ? active!.selectionEnd : null;
+  const activeRole = active?.getAttribute("data-role") ?? null;
+  const selectableTypes = new Set(["text", "search", "email", "tel", "url", "password"]);
+  const canRestoreSelection = active instanceof HTMLInputElement && selectableTypes.has(active.type);
+  const selStart = canRestoreSelection ? active!.selectionStart : null;
+  const selEnd = canRestoreSelection ? active!.selectionEnd : null;
 
   const page =
     state.route.name === "spot"
@@ -154,8 +163,8 @@ function render(): void {
   updateMetaTags();
   document.body.classList.toggle("has-sticky-cta", state.route.name === "home");
 
-  if (wasSearchFocused) {
-    const next = root.querySelector<HTMLInputElement>('[data-role="search-input"]');
+  if (activeRole) {
+    const next = root.querySelector<HTMLInputElement>(`[data-role="${activeRole}"]`);
     if (next) {
       next.focus();
       if (selStart !== null && selEnd !== null) next.setSelectionRange(selStart, selEnd);
@@ -219,7 +228,7 @@ function showTooltip(target: SVGGElement, clientX: number, clientY: number): voi
   } else {
     tip.innerHTML = `
       <div class="spot-tooltip__title">Spot #${spot.id} &middot; ${TIER_LABEL[spot.tier]}</div>
-      <div class="spot-tooltip__sub">${spot.buyerName ?? ""}</div>
+      <div class="spot-tooltip__sub">${escapeHtml(spot.buyerName ?? "")}</div>
     `;
   }
   tip.style.left = `${clientX}px`;
@@ -401,6 +410,37 @@ document.addEventListener("input", (e) => {
   }
 });
 
+// ---------------- Claim form field sync ----------------
+// Keeps store.pendingClaim in step with every keystroke (not just on
+// submit) so a re-render triggered mid-form - most notably the async logo
+// upload below calling updatePendingClaim({ logoUrl }) - merges onto the
+// text the visitor has already typed instead of the still-blank initial
+// state, which used to wipe the whole form the moment a photo finished
+// uploading. Left untrimmed here on purpose (trimming while typing would
+// eat a trailing space between words); the submit handler still trims
+// before it validates and stores anything.
+
+const CLAIM_FIELD_BY_ROLE: Record<string, "buyerName" | "company" | "email" | "website" | "tagline"> = {
+  "name-input": "buyerName",
+  "company-input": "company",
+  "email-input": "email",
+  "website-input": "website",
+  "tagline-input": "tagline",
+};
+
+document.addEventListener("input", (e) => {
+  const el = e.target as HTMLInputElement;
+  const role = el.getAttribute("data-role");
+  if (!role) return;
+  if (role === "terms-input") {
+    store.updatePendingClaim({ agreedToTerms: el.checked });
+    return;
+  }
+  const field = CLAIM_FIELD_BY_ROLE[role];
+  if (!field) return;
+  store.updatePendingClaim({ [field]: el.value });
+});
+
 // ---------------- Claim form submit ----------------
 
 document.addEventListener("submit", (e) => {
@@ -428,22 +468,32 @@ document.addEventListener("submit", (e) => {
 
 // ---------------- Logo upload ----------------
 
+function setLogoError(message: string): void {
+  // Re-queried fresh on every call rather than cached once at the top of
+  // handleLogoFile: a keystroke in another field can re-render the whole
+  // form (and replace this node) while this upload is still awaiting
+  // validation/processing, which would otherwise leave us writing into a
+  // detached element the visitor can no longer see.
+  const errorEl = document.querySelector<HTMLElement>('[data-role="logo-error"]');
+  if (errorEl) errorEl.textContent = message;
+}
+
 async function handleLogoFile(file: File): Promise<void> {
   analytics.track("logo_upload_started");
   const error = await validateLogoFile(file);
-  const errorEl = document.querySelector<HTMLElement>('[data-role="logo-error"]');
   if (error) {
-    if (errorEl) errorEl.textContent = error;
+    setLogoError(error);
     return;
   }
-  if (errorEl) errorEl.textContent = "";
+  setLogoError("");
 
   const result = await processLogoFile(file);
   if (result.error) {
-    if (errorEl) errorEl.textContent = result.error;
+    setLogoError(result.error);
     return;
   }
   store.updatePendingClaim({ logoUrl: result.dataUrl });
+  setLogoError("");
   analytics.track("logo_upload_completed");
 }
 

@@ -40,7 +40,7 @@ function renderLogoOrBadge(spot: Spot): string {
   if (spot.logoUrl) {
     const pad = Math.min(spot.width, spot.height) * 0.12;
     return `<image
-        href="${spot.logoUrl}"
+        href="${escapeHtml(spot.logoUrl)}"
         x="${spot.x + pad}"
         y="${spot.y + pad}"
         width="${spot.width - pad * 2}"

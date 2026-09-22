@@ -31,7 +31,7 @@ export function renderClaimForm(state: AppState): string {
 
   const logoBlock = claim.logoUrl
     ? `<div class="dropzone-preview">
-        <img src="${claim.logoUrl}" alt="Uploaded logo preview" />
+        <img src="${escapeHtml(claim.logoUrl)}" alt="Uploaded logo preview" />
         <span>Logo added</span>
         <button type="button" class="dropzone-preview__remove" data-action="remove-logo">Remove</button>
       </div>`
@@ -82,7 +82,7 @@ export function renderClaimForm(state: AppState): string {
         </div>
         <div class="field">
           <label for="claim-website">Website <span style="text-transform:none;font-weight:500;">(optional)</span></label>
-          <input id="claim-website" name="website" type="text" placeholder="https://..." value="${escapeHtml(claim.website)}" data-role="website-input" />
+          <input id="claim-website" name="website" type="text" placeholder="https://..." value="${escapeHtml(claim.website)}" maxlength="500" data-role="website-input" />
           ${errorFor(state, "website")}
         </div>
         <div class="field">

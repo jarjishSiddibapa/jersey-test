@@ -80,6 +80,31 @@ test("bookSpot rejects an over-length name/company/tagline", async () => {
   assert.ok(store.getState().formErrors.buyerName);
 });
 
+test("bookSpot rejects an over-length email even when it's otherwise well-formed", async () => {
+  const store = freshStore();
+  store.selectSingleSpot(1);
+  store.updatePendingClaim({
+    buyerName: "Acme",
+    email: `${"x".repeat(115)}@b.com`,
+    agreedToTerms: true,
+  });
+  await store.bookSpot();
+  assert.ok(store.getState().formErrors.email);
+});
+
+test("bookSpot rejects an over-length website URL", async () => {
+  const store = freshStore();
+  store.selectSingleSpot(1);
+  store.updatePendingClaim({
+    buyerName: "Acme",
+    email: "a@b.com",
+    website: `https://example.com/${"x".repeat(500)}`,
+    agreedToTerms: true,
+  });
+  await store.bookSpot();
+  assert.ok(store.getState().formErrors.website);
+});
+
 test("bookSpot rejects booking without agreeing to the rules", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);

@@ -11,7 +11,7 @@ export function renderSpotProfile(state: AppState): string {
 
   const isFounding = (spot.purchaseRank ?? Infinity) <= FOUNDING_SPOT_THRESHOLD;
   const logo = spot.logoUrl
-    ? `<img src="${spot.logoUrl}" alt="${escapeHtml(spot.buyerName ?? "")} logo" />`
+    ? `<img src="${escapeHtml(spot.logoUrl)}" alt="${escapeHtml(spot.buyerName ?? "")} logo" />`
     : initialsOf(spot.buyerName ?? "?");
   const href = spot.website ? safeWebsiteHref(spot.website) : null;
 

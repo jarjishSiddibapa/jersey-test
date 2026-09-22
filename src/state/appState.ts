@@ -170,11 +170,15 @@ export class AppStore {
     else if (claim.buyerName.trim().length > 60) errors.buyerName = "Keep it under 60 characters.";
 
     if (!claim.email.trim()) errors.email = "Enter an email address.";
+    else if (claim.email.trim().length > 120) errors.email = "Keep it under 120 characters.";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claim.email.trim())) errors.email = "That email doesn't look valid.";
 
     if (claim.website.trim()) {
-      const normalized = normalizeWebsiteUrl(claim.website);
-      if (!isSafeUrl(normalized)) errors.website = "Enter a valid http(s) website URL.";
+      if (claim.website.trim().length > 500) errors.website = "Keep the website URL under 500 characters.";
+      else {
+        const normalized = normalizeWebsiteUrl(claim.website);
+        if (!isSafeUrl(normalized)) errors.website = "Enter a valid http(s) website URL.";
+      }
     }
 
     if (claim.company.trim().length > 60) errors.company = "Keep it under 60 characters.";

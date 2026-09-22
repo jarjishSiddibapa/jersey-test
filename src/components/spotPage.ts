@@ -36,7 +36,7 @@ export function renderSpotPage(state: AppState, spotId: number): string {
 
   const isFounding = (spot.purchaseRank ?? Infinity) <= FOUNDING_SPOT_THRESHOLD;
   const logo = spot.logoUrl
-    ? `<img src="${spot.logoUrl}" alt="${escapeHtml(spot.buyerName ?? "")} logo" />`
+    ? `<img src="${escapeHtml(spot.logoUrl)}" alt="${escapeHtml(spot.buyerName ?? "")} logo" />`
     : initialsOf(spot.buyerName ?? "?");
   const href = spot.website ? safeWebsiteHref(spot.website) : null;
   const purchasedDate = spot.purchasedAt ? new Date(spot.purchasedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "-";
