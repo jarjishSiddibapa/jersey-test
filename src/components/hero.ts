@@ -1,16 +1,16 @@
 import type { AppState } from "../types";
 import { renderPriceCard } from "./priceCard";
-import { renderJerseySvg } from "./jersey";
-import { getCurrentDay, getRemainingSpotCount } from "../services/pricing";
+import { renderCharacterSvg } from "./character";
+import { FOUNDING_SPOT_THRESHOLD, getClaimedSpots, getRemainingSpotCount } from "../services/pricing";
 
-export function renderHero(state: AppState, now: number): string {
+export function renderHero(state: AppState): string {
   const remaining = getRemainingSpotCount(state.spots);
   const soldOut = remaining === 0;
-  const day = getCurrentDay(state.config, now, state.demoDay);
+  const claimed = getClaimedSpots(state.spots).length;
 
   const eyebrow = soldOut
     ? "The jersey is full"
-    : day === 1
+    : claimed < FOUNDING_SPOT_THRESHOLD
       ? "Founding spots are live"
       : "One jersey. Limited spots. Rising prices.";
 
@@ -28,7 +28,7 @@ export function renderHero(state: AppState, now: number): string {
       <div class="container">
         <div class="hero__stage">
           <div class="hero__glow" aria-hidden="true"></div>
-          ${renderJerseySvg(state.spots, {
+          ${renderCharacterSvg(state.spots, {
             idPrefix: "hero",
             selectionMode: false,
             selectedSpotId: state.selectedSpotId,
@@ -45,14 +45,14 @@ export function renderHero(state: AppState, now: number): string {
             ${
               soldOut
                 ? "Every spot on this jersey is taken. Explore who's on it."
-                : "Claim a spot on the jersey before tomorrow makes it more expensive."
+                : "Claim a spot before the next one costs more."
             }
           </p>
           ${actions}
         </div>
 
         <div class="hero__price">
-          ${renderPriceCard(state, now)}
+          ${renderPriceCard(state)}
         </div>
       </div>
     </section>

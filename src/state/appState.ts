@@ -1,5 +1,5 @@
 import type { ActivityEntry, AppState, PendingClaim, PricingConfig, Spot } from "../types";
-import { DEFAULT_PRICING_CONFIG, getCurrentDay, getCurrentPrice } from "../services/pricing";
+import { DEFAULT_PRICING_CONFIG, getClaimedSpots, getCurrentPrice } from "../services/pricing";
 import { LocalSpotRepository, type SpotRepository } from "../services/repository";
 import { DemoPaymentService } from "../services/demoPayment";
 import { generateSpots, TOTAL_SPOTS } from "../data/spots";
@@ -8,9 +8,7 @@ import { seedDemoBuyers } from "../data/seedData";
 type Listener = () => void;
 
 function freshConfig(): PricingConfig {
-  // Anchors Day 1 to the moment the prototype is first opened (or reset),
-  // and caps price growth so demo-clocking many days ahead stays sane.
-  return { ...DEFAULT_PRICING_CONFIG, projectStartDate: new Date().toISOString(), maximumPrice: 2500 };
+  return { ...DEFAULT_PRICING_CONFIG };
 }
 
 export class AppStore {
@@ -29,11 +27,9 @@ export class AppStore {
     const storedSpots = this.repository.loadSpots();
     const spots = storedSpots && storedSpots.length === TOTAL_SPOTS ? storedSpots : generateSpots();
     const activity = this.repository.loadActivity() ?? [];
-    const demoDay = this.repository.loadDemoDay();
 
     return {
       config,
-      demoDay,
       spots,
       activity,
       selectionMode: false,
@@ -64,18 +60,13 @@ export class AppStore {
   private persist(): void {
     this.repository.saveSpots(this.state.spots);
     this.repository.saveActivity(this.state.activity);
-    this.repository.saveDemoDay(this.state.demoDay);
     this.repository.saveConfig(this.state.config);
   }
 
   // ---- derived pricing helpers (single source of truth: services/pricing) ----
 
-  currentDay(now: number = Date.now()): number {
-    return getCurrentDay(this.state.config, now, this.state.demoDay);
-  }
-
-  currentPrice(now: number = Date.now()): number {
-    return getCurrentPrice(this.state.config, now, this.state.demoDay);
+  currentPrice(): number {
+    return getCurrentPrice(this.state.config, this.state.spots);
   }
 
   // ---- claim flow ----
@@ -121,8 +112,8 @@ export class AppStore {
     if (!result.success) return;
 
     const now = Date.now();
-    const day = this.currentDay(now);
-    const price = this.currentPrice(now);
+    const rank = getClaimedSpots(this.state.spots).length + 1;
+    const price = this.currentPrice();
 
     const spots = this.state.spots.map((s) =>
       s.id === pendingClaim.spotId
@@ -133,7 +124,7 @@ export class AppStore {
             website: pendingClaim.website.trim() || undefined,
             logoUrl: pendingClaim.logoUrl,
             pricePaid: price,
-            purchaseDay: day,
+            purchaseRank: rank,
             purchasedAt: new Date(now).toISOString(),
           } satisfies Spot)
         : s,
@@ -192,23 +183,10 @@ export class AppStore {
     this.setState({ prototypeAdminOpen: false });
   }
 
-  advanceDay(delta: number): void {
-    const current = this.currentDay();
-    const next = Math.max(1, current + delta);
-    this.setState({ demoDay: next });
-    this.persist();
-  }
-
-  resetDemoDayToNatural(): void {
-    this.setState({ demoDay: null });
-    this.persist();
-  }
-
   resetAllData(): void {
     this.repository.clearAll();
     this.state = {
       config: freshConfig(),
-      demoDay: null,
       spots: generateSpots(),
       activity: [],
       selectionMode: false,
@@ -225,15 +203,12 @@ export class AppStore {
   }
 
   seedDemoBuyers(count: number): void {
-    const day = Math.max(this.currentDay(), 3);
-    if (this.state.demoDay === null && day !== this.currentDay()) {
-      this.setState({ demoDay: day });
-    }
+    const startRank = getClaimedSpots(this.state.spots).length + 1;
     const { spots, activity } = seedDemoBuyers(
       this.state.spots,
       count,
       this.state.config,
-      this.currentDay(),
+      startRank,
       Date.now() % 100000,
     );
     this.setState({ spots, activity: [...activity, ...this.state.activity] });

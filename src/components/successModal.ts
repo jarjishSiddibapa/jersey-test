@@ -1,11 +1,12 @@
 import type { AppState } from "../types";
+import { FOUNDING_SPOT_THRESHOLD } from "../services/pricing";
 import { formatPrice } from "../utils/formatting";
 
 export function renderSuccessPanel(state: AppState): string {
   const spot = state.spots.find((s) => s.id === state.lastPurchasedSpotId);
   if (!spot) return "";
 
-  const isFounding = spot.purchaseDay === 1;
+  const isFounding = (spot.purchaseRank ?? Infinity) <= FOUNDING_SPOT_THRESHOLD;
 
   return `
     <div class="panel" data-role="claim-panel">

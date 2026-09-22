@@ -2,13 +2,8 @@ import "./styles/globals.css";
 import "./styles/jersey.css";
 
 import { store } from "./state/appState";
-import {
-  getCurrentDay,
-  getCurrentPrice,
-  getTimeUntilNextIncrease,
-  getRemainingSpotCount,
-} from "./services/pricing";
-import { formatCountdown, formatPrice } from "./utils/formatting";
+import { getCurrentPrice, getRemainingSpotCount } from "./services/pricing";
+import { formatPrice } from "./utils/formatting";
 import { processLogoFile, validateLogoFile } from "./utils/imageProcessing";
 
 import { renderHeader } from "./components/header";
@@ -33,10 +28,10 @@ function renderOverlay(): string {
   const state = store.getState();
 
   if (state.claimStep === "form") {
-    return `<div class="overlay" data-role="overlay">${renderClaimForm(state, Date.now())}</div>`;
+    return `<div class="overlay" data-role="overlay">${renderClaimForm(state)}</div>`;
   }
   if (state.claimStep === "checkout") {
-    return `<div class="overlay" data-role="overlay">${renderClaimCheckout(state, Date.now())}</div>`;
+    return `<div class="overlay" data-role="overlay">${renderClaimCheckout(state)}</div>`;
   }
   if (state.claimStep === "success") {
     return `<div class="overlay" data-role="overlay">${renderSuccessPanel(state)}</div>`;
@@ -49,15 +44,14 @@ function renderOverlay(): string {
 
 function renderStickyCta(): string {
   const state = store.getState();
-  const now = Date.now();
   const remaining = getRemainingSpotCount(state.spots);
   if (remaining === 0) {
     return `<div class="sticky-cta"><span class="sticky-cta__price">The jersey is full</span></div>`;
   }
-  const price = getCurrentPrice(state.config, now, state.demoDay);
+  const price = getCurrentPrice(state.config, state.spots);
   return `
     <div class="sticky-cta">
-      <span class="sticky-cta__price">Today: <span>${formatPrice(price, state.config.currency)}</span></span>
+      <span class="sticky-cta__price">Current: <span>${formatPrice(price, state.config.currency)}</span></span>
       <button class="btn btn-accent" data-action="start-claim">Claim your spot</button>
     </div>
   `;
@@ -66,8 +60,7 @@ function renderStickyCta(): string {
 function render(): void {
   const state = store.getState();
   const now = Date.now();
-  const day = getCurrentDay(state.config, now, state.demoDay);
-  const price = getCurrentPrice(state.config, now, state.demoDay);
+  const price = getCurrentPrice(state.config, state.spots);
 
   // preserve focus/selection on the live search input across re-renders
   const active = document.activeElement as HTMLInputElement | null;
@@ -77,22 +70,20 @@ function render(): void {
 
   root.innerHTML = `
     ${renderHeader()}
-    ${renderHero(state, now)}
-    ${renderStats(state, now)}
+    ${renderHero(state)}
+    ${renderStats(state)}
     ${renderWhyCards()}
     ${renderActivityFeed(state, now)}
-    ${renderFomo(state, now)}
+    ${renderFomo(state)}
     ${renderHowItWorks()}
     ${renderExplorer(state)}
     ${renderLeaderboard(state)}
     ${renderAbout()}
     ${renderFooter()}
     ${renderStickyCta()}
-    ${renderPrototypeAdmin(state, price, day)}
+    ${renderPrototypeAdmin(state, price)}
     ${renderOverlay()}
   `;
-
-  tickCountdown();
 
   if (wasSearchFocused) {
     const next = root.querySelector<HTMLInputElement>('[data-role="search-input"]');
@@ -109,16 +100,6 @@ function render(): void {
     if (!state.pendingClaim?.buyerName) claimNameInput.focus();
   }
 }
-
-function tickCountdown(): void {
-  const state = store.getState();
-  const ms = getTimeUntilNextIncrease(state.config, Date.now());
-  document.querySelectorAll('[data-role="countdown"]').forEach((el) => {
-    el.textContent = formatCountdown(ms);
-  });
-}
-
-setInterval(tickCountdown, 1000);
 
 store.subscribe(render);
 render();
@@ -145,7 +126,7 @@ function showTooltip(target: SVGGElement, clientX: number, clientY: number): voi
 
   const tip = ensureTooltip();
   if (spot.status === "available") {
-    const price = getCurrentPrice(state.config, Date.now(), state.demoDay);
+    const price = getCurrentPrice(state.config, state.spots);
     tip.innerHTML = `
       <div class="spot-tooltip__title">Spot #${spot.id}</div>
       <div class="spot-tooltip__price">${formatPrice(price, state.config.currency)}</div>
@@ -261,14 +242,8 @@ document.addEventListener("click", (e) => {
     case "close-admin":
       store.toggleAdmin();
       break;
-    case "day-plus":
-      store.advanceDay(1);
-      break;
-    case "day-minus":
-      store.advanceDay(-1);
-      break;
-    case "reset-demo-day":
-      store.resetDemoDayToNatural();
+    case "simulate-one":
+      store.seedDemoBuyers(1);
       break;
     case "seed-data":
       store.seedDemoBuyers(30);

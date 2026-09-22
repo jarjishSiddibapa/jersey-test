@@ -1,11 +1,12 @@
 import type { AppState } from "../types";
+import { FOUNDING_SPOT_THRESHOLD } from "../services/pricing";
 import { formatPrice, initialsOf, escapeHtml, normalizeWebsiteUrl } from "../utils/formatting";
 
 export function renderSpotProfile(state: AppState): string {
   const spot = state.spots.find((s) => s.id === state.viewingSpotId);
   if (!spot) return "";
 
-  const isFounding = spot.purchaseDay === 1;
+  const isFounding = (spot.purchaseRank ?? Infinity) <= FOUNDING_SPOT_THRESHOLD;
   const logo = spot.logoUrl
     ? `<img src="${spot.logoUrl}" alt="${escapeHtml(spot.buyerName ?? "")} logo" />`
     : initialsOf(spot.buyerName ?? "?");
@@ -18,7 +19,7 @@ export function renderSpotProfile(state: AppState): string {
       <div class="spot-profile__logo">${logo}</div>
       <h3 class="spot-profile__name">${escapeHtml(spot.buyerName ?? "")}</h3>
       <p class="spot-profile__meta">
-        Joined Day ${spot.purchaseDay ?? "-"} &middot; Paid ${formatPrice(spot.pricePaid ?? 0, state.config.currency)}
+        Claim #${spot.purchaseRank ?? "-"} &middot; Paid ${formatPrice(spot.pricePaid ?? 0, state.config.currency)}
         ${spot.isDemo ? " &middot; Demo data" : ""}
       </p>
       ${

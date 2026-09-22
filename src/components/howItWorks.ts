@@ -15,7 +15,7 @@ export function renderHowItWorks(): string {
           </div>
           <div class="step-item">
             <div class="step-item__num">3</div>
-            <p class="step-item__text">Pay today's price.</p>
+            <p class="step-item__text">Pay the current price.</p>
           </div>
           <div class="step-item">
             <div class="step-item__num">4</div>

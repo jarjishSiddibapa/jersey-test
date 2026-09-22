@@ -257,10 +257,10 @@ textarea {
   pointer-events: none;
 }
 
-.hero__stage .jersey-svg {
+.hero__stage .character-svg {
   position: relative;
   z-index: 1;
-  width: min(100%, 520px);
+  width: min(100%, 360px);
   filter: drop-shadow(0 24px 40px rgba(17, 17, 17, 0.16));
 }
 
@@ -368,22 +368,6 @@ textarea {
   height: 1px;
   background: rgba(255, 255, 255, 0.14);
   margin: 16px 0;
-}
-
-.price-card__countdown-label {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.55);
-  margin: 0 0 6px;
-}
-
-.price-card__countdown-value {
-  font-size: 24px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
 }
 
 .price-card__progress-track {
@@ -1307,28 +1291,6 @@ textarea {
   font-variant-numeric: tabular-nums;
 }
 
-.admin-day-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 14px 0;
-}
-
-.admin-day-controls button {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  border-radius: 8px;
-  padding: 8px;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.admin-day-controls button:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
 .admin-actions {
   display: flex;
   flex-direction: column;
@@ -1440,8 +1402,8 @@ textarea {
     max-width: 860px;
   }
 
-  .hero__stage .jersey-svg {
-    width: min(100%, 620px);
+  .hero__stage .character-svg {
+    width: min(100%, 440px);
   }
 }
 

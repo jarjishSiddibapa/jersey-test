@@ -14,7 +14,7 @@ export function renderLeaderboard(state: AppState): string {
     .slice(0, 6);
 
   const earliest = [...claimed]
-    .sort((a, b) => new Date(a.purchasedAt ?? 0).getTime() - new Date(b.purchasedAt ?? 0).getTime())
+    .sort((a, b) => (a.purchaseRank ?? Infinity) - (b.purchaseRank ?? Infinity))
     .slice(0, 6);
 
   const countRows = topByCount.length
@@ -37,7 +37,7 @@ export function renderLeaderboard(state: AppState): string {
         <div class="leaderboard-row">
           <span class="leaderboard-rank">${String(i + 1).padStart(2, "0")}</span>
           <span class="leaderboard-name">${escapeHtml(spot.buyerName ?? "")}</span>
-          <span class="leaderboard-count">Day ${spot.purchaseDay ?? "-"}</span>
+          <span class="leaderboard-count">Claim #${spot.purchaseRank ?? "-"}</span>
         </div>`,
         )
         .join("")

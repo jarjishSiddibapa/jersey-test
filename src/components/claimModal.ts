@@ -1,6 +1,6 @@
 import type { AppState } from "../types";
 import { renderJerseySvg } from "./jersey";
-import { getCurrentPrice } from "../services/pricing";
+import { getClaimedSpots, getCurrentPrice } from "../services/pricing";
 import { formatPrice, escapeHtml } from "../utils/formatting";
 
 function previewSpots(state: AppState, spotId: number) {
@@ -16,9 +16,9 @@ function previewSpots(state: AppState, spotId: number) {
   );
 }
 
-export function renderClaimForm(state: AppState, now: number): string {
+export function renderClaimForm(state: AppState): string {
   const spotId = state.selectedSpotId!;
-  const price = getCurrentPrice(state.config, now, state.demoDay);
+  const price = getCurrentPrice(state.config, state.spots);
   const claim = state.pendingClaim!;
   const preview = previewSpots(state, spotId);
 
@@ -45,7 +45,7 @@ export function renderClaimForm(state: AppState, now: number): string {
 
       <div class="claim-price-box">
         <div>
-          <div class="claim-price-box__label">Today's price</div>
+          <div class="claim-price-box__label">Current price</div>
           <div class="claim-price-box__value">${formatPrice(price, state.config.currency)}</div>
         </div>
         <div class="claim-price-box__label">Locked in at purchase</div>
@@ -78,11 +78,11 @@ export function renderClaimForm(state: AppState, now: number): string {
   `;
 }
 
-export function renderClaimCheckout(state: AppState, now: number): string {
+export function renderClaimCheckout(state: AppState): string {
   const spotId = state.selectedSpotId!;
-  const price = getCurrentPrice(state.config, now, state.demoDay);
+  const price = getCurrentPrice(state.config, state.spots);
   const claim = state.pendingClaim!;
-  const day = state.demoDay ?? undefined;
+  const rank = getClaimedSpots(state.spots).length + 1;
 
   return `
     <div class="panel" data-role="claim-panel">
@@ -95,7 +95,7 @@ export function renderClaimCheckout(state: AppState, now: number): string {
           <div class="claim-price-box__label">Spot #${spotId}</div>
           <div class="claim-price-box__value">${formatPrice(price, state.config.currency)}</div>
         </div>
-        ${day !== undefined ? `<div class="claim-price-box__label">Day ${day}</div>` : ""}
+        <div class="claim-price-box__label">Claim #${rank}</div>
       </div>
 
       <div class="checkout-row">

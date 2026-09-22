@@ -1,11 +1,12 @@
 import type { AppState } from "../types";
-import { getClaimedSpots } from "../services/pricing";
+import { getClaimedSpots, getCurrentPrice } from "../services/pricing";
 import { TOTAL_SPOTS } from "../data/spots";
+import { formatPrice } from "../utils/formatting";
 
-export function renderStats(state: AppState, now: number): string {
+export function renderStats(state: AppState): string {
   const claimed = getClaimedSpots(state.spots).length;
   const remaining = TOTAL_SPOTS - claimed;
-  const day = state.demoDay ?? Math.max(1, Math.floor((now - new Date(state.config.projectStartDate).getTime()) / state.config.pricingInterval) + 1);
+  const price = getCurrentPrice(state.config, state.spots);
 
   return `
     <div class="stats-strip">
@@ -23,8 +24,8 @@ export function renderStats(state: AppState, now: number): string {
           <div class="stat-item__label">Remaining</div>
         </div>
         <div class="stat-item">
-          <div class="stat-item__value">Day ${day}</div>
-          <div class="stat-item__label">Current era</div>
+          <div class="stat-item__value stat-item__value--accent">${formatPrice(price, state.config.currency)}</div>
+          <div class="stat-item__label">Current price</div>
         </div>
       </div>
     </div>

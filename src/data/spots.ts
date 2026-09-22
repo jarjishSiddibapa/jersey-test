@@ -26,15 +26,15 @@ interface RegionBounds {
 // regions sit inside the constant-width torso column (285-715), and the
 // lower region stops well above the hem stripe.
 const REGIONS: RegionBounds[] = [
-  { region: "shoulder", x0: 302, y0: 118, x1: 462, y1: 198, count: 10 },
-  { region: "shoulder", x0: 538, y0: 118, x1: 698, y1: 198, count: 10 },
-  { region: "sleeve", x0: 172, y0: 118, x1: 272, y1: 198, count: 17 },
-  { region: "sleeve", x0: 728, y0: 118, x1: 828, y1: 198, count: 17 },
-  { region: "chest", x0: 305, y0: 225, x1: 695, y1: 470, count: 72 },
-  { region: "lower", x0: 305, y0: 490, x1: 695, y1: 758, count: 74 },
+  { region: "shoulder", x0: 302, y0: 118, x1: 462, y1: 198, count: 16 },
+  { region: "shoulder", x0: 538, y0: 118, x1: 698, y1: 198, count: 16 },
+  { region: "sleeve", x0: 172, y0: 118, x1: 272, y1: 198, count: 16 },
+  { region: "sleeve", x0: 728, y0: 118, x1: 828, y1: 198, count: 16 },
+  { region: "chest", x0: 305, y0: 225, x1: 695, y1: 470, count: 110 },
+  { region: "lower", x0: 305, y0: 490, x1: 695, y1: 758, count: 126 },
 ];
 
-const GAP = 10;
+const GAP = 6;
 
 /**
  * Tiles a region into a brick-like mosaic of rects. Row counts are varied

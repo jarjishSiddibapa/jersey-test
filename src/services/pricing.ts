@@ -2,70 +2,37 @@ import type { PricingConfig, Spot } from "../types";
 
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   basePrice: 0.01,
-  // A gentle daily compounding rate (not a doubling) so the price stays
-  // interesting for months instead of hitting the cap in under 3 weeks.
-  // ~8%/day roughly doubles every 9 days and reaches the $2,500 cap
-  // around day 160.
+  // A gentle per-spot compounding rate (not a doubling) so the price stays
+  // interesting across all 300 spots instead of hitting the cap in the
+  // first few dozen sales. ~8% per spot sold reaches the $2,500 cap
+  // around the 160th spot claimed.
   growthMultiplier: 1.08,
-  pricingInterval: 24 * 60 * 60 * 1000,
-  maximumPrice: null,
+  maximumPrice: 2500,
   currency: "USD",
-  projectStartDate: new Date().toISOString(),
 };
 
-/** Day 1 is the first day of the project. Returns the natural (real-time) day number. */
-export function getNaturalDay(config: PricingConfig, now: number): number {
-  const start = new Date(config.projectStartDate).getTime();
-  const elapsed = Math.max(0, now - start);
-  return Math.floor(elapsed / config.pricingInterval) + 1;
-}
+/** The first N spots claimed are tagged as founding members. */
+export const FOUNDING_SPOT_THRESHOLD = 10;
 
-/** Effective current day, honoring a prototype demo-day override when present. */
-export function getCurrentDay(
-  config: PricingConfig,
-  now: number,
-  demoDayOverride: number | null,
-): number {
-  if (demoDayOverride !== null) return demoDayOverride;
-  return getNaturalDay(config, now);
-}
-
-export function getPriceForDay(config: PricingConfig, day: number): number {
-  const raw = config.basePrice * Math.pow(config.growthMultiplier, day - 1);
-  // Rounding to whole cents would hide several days of gentle compounding
-  // (1.08x/day doesn't clear a full cent for about a week) - round to a
-  // finer step instead so the price still visibly moves day to day.
+/** Price for the Nth spot ever claimed (1-indexed: rank 1 is the very first sale). */
+export function getPriceForRank(config: PricingConfig, rank: number): number {
+  const raw = config.basePrice * Math.pow(config.growthMultiplier, Math.max(0, rank - 1));
+  // Rounding to whole cents would hide most of the early compounding
+  // (1.08x/spot doesn't clear a full cent for several sales) - round to a
+  // finer step instead so the price visibly moves from spot to spot.
   const rounded = Math.round(raw * 10000) / 10000;
   if (config.maximumPrice !== null) return Math.min(rounded, config.maximumPrice);
   return rounded;
 }
 
-export function getCurrentPrice(
-  config: PricingConfig,
-  now: number,
-  demoDayOverride: number | null,
-): number {
-  return getPriceForDay(config, getCurrentDay(config, now, demoDayOverride));
+/** Price the NEXT spot (the one that hasn't sold yet) will go for. */
+export function getCurrentPrice(config: PricingConfig, spots: Spot[]): number {
+  return getPriceForRank(config, getClaimedSpots(spots).length + 1);
 }
 
-export function getNextPrice(
-  config: PricingConfig,
-  now: number,
-  demoDayOverride: number | null,
-): number {
-  return getPriceForDay(config, getCurrentDay(config, now, demoDayOverride) + 1);
-}
-
-/**
- * Milliseconds remaining in the current real-time pricing interval.
- * Always derived from wall-clock time and the configured interval so the
- * countdown is live and truthful, independent of any demo-day override.
- */
-export function getTimeUntilNextIncrease(config: PricingConfig, now: number): number {
-  const start = new Date(config.projectStartDate).getTime();
-  const elapsed = Math.max(0, now - start);
-  const intoInterval = elapsed % config.pricingInterval;
-  return config.pricingInterval - intoInterval;
+/** Price the spot AFTER that one will go for, once the current one sells. */
+export function getNextPrice(config: PricingConfig, spots: Spot[]): number {
+  return getPriceForRank(config, getClaimedSpots(spots).length + 2);
 }
 
 export function getClaimedSpots(spots: Spot[]): Spot[] {

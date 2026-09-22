@@ -80,7 +80,16 @@ export interface JerseyRenderOptions {
   idPrefix?: string;
 }
 
-export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}): string {
+/**
+ * Everything the jersey draws (gradient defs, silhouette, seams, spots) as
+ * bare markup with no wrapping <svg> tag, so it can be embedded inside a
+ * larger composition (see character.ts) at whatever position that
+ * composition needs, while a standalone caller gets the same content via
+ * renderJerseySvg below. Reusing this instead of hand-copying coordinates
+ * into a second drawing is what keeps embedded and standalone jerseys
+ * pixel-identical.
+ */
+export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = {}): string {
   const {
     highlightedIds,
     dimUnhighlighted,
@@ -120,13 +129,7 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
 
   const gradientId = `${idPrefix}-jersey-gradient`;
 
-  return `<svg
-      class="jersey-svg"
-      viewBox="0 0 ${JERSEY_VIEWBOX.width} ${JERSEY_VIEWBOX.height}"
-      xmlns="http://www.w3.org/2000/svg"
-      role="img"
-      aria-label="The Internet Jersey"
-    >
+  return `
       <defs>
         <clipPath id="${clipId}">
           <path d="${JERSEY_PATH}" />
@@ -148,6 +151,15 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
       <path d="${COLLAR_PATH}" class="jersey-collar" />
       <text x="500" y="660" class="jersey-number" text-anchor="middle">01</text>
       <text x="762" y="95" class="jersey-mark" text-anchor="start">IJ</text>
-      <g class="jersey-spots">${spotNodes}</g>
-    </svg>`;
+      <g class="jersey-spots">${spotNodes}</g>`;
+}
+
+export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}): string {
+  return `<svg
+      class="jersey-svg"
+      viewBox="0 0 ${JERSEY_VIEWBOX.width} ${JERSEY_VIEWBOX.height}"
+      xmlns="http://www.w3.org/2000/svg"
+      role="img"
+      aria-label="The Internet Jersey"
+    >${renderJerseyInner(spots, options)}</svg>`;
 }

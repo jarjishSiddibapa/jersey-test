@@ -3,7 +3,7 @@ import { getClaimedSpots } from "../services/pricing";
 import { TOTAL_SPOTS } from "../data/spots";
 import { formatPrice } from "../utils/formatting";
 
-export function renderPrototypeAdmin(state: AppState, price: number, day: number): string {
+export function renderPrototypeAdmin(state: AppState, price: number): string {
   if (!state.prototypeAdminOpen) return "";
   const claimed = getClaimedSpots(state.spots).length;
 
@@ -15,11 +15,7 @@ export function renderPrototypeAdmin(state: AppState, price: number, day: number
       </p>
 
       <div class="admin-row">
-        <span class="admin-row__label">Day</span>
-        <span class="admin-row__value">${day}${state.demoDay === null ? " (live)" : ""}</span>
-      </div>
-      <div class="admin-row">
-        <span class="admin-row__label">Price</span>
+        <span class="admin-row__label">Next spot's price</span>
         <span class="admin-row__value">${formatPrice(price, state.config.currency)}</span>
       </div>
       <div class="admin-row">
@@ -27,17 +23,12 @@ export function renderPrototypeAdmin(state: AppState, price: number, day: number
         <span class="admin-row__value">${claimed} / ${TOTAL_SPOTS}</span>
       </div>
 
-      <div class="admin-day-controls">
-        <button data-action="day-minus">&minus;1 Day</button>
-        <button data-action="day-plus">+1 Day</button>
-      </div>
-
       <div class="admin-actions">
+        <button data-action="simulate-one">Simulate 1 purchase</button>
         <button data-action="seed-data">Seed 30 demo buyers</button>
         <button data-action="fill-50">Fill to 50%</button>
         <button data-action="fill-90">Fill to 90%</button>
         <button data-action="sold-out">Simulate sold out</button>
-        <button data-action="reset-demo-day">Reset day to live clock</button>
         <button data-action="reset-all" class="danger">Reset all data</button>
       </div>
     </div>

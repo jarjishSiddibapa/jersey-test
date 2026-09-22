@@ -11,8 +11,6 @@ export interface SpotRepository {
   saveSpots(spots: Spot[]): void;
   loadActivity(): ActivityEntry[] | null;
   saveActivity(activity: ActivityEntry[]): void;
-  loadDemoDay(): number | null;
-  saveDemoDay(day: number | null): void;
   loadConfig(): PricingConfig | null;
   saveConfig(config: PricingConfig): void;
   clearAll(): void;
@@ -37,14 +35,6 @@ export class LocalSpotRepository implements SpotRepository {
     this.storage.set("activity", activity);
   }
 
-  loadDemoDay(): number | null {
-    return this.storage.get<number | null>("demoDay");
-  }
-
-  saveDemoDay(day: number | null): void {
-    this.storage.set("demoDay", day);
-  }
-
   loadConfig(): PricingConfig | null {
     return this.storage.get<PricingConfig>("config");
   }
@@ -54,6 +44,6 @@ export class LocalSpotRepository implements SpotRepository {
   }
 
   clearAll(): void {
-    this.storage.clearAll(["spots", "activity", "demoDay", "config"]);
+    this.storage.clearAll(["spots", "activity", "config"]);
   }
 }

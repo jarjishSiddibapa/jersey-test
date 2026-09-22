@@ -7,7 +7,7 @@ export function renderAbout(): string {
         <div class="about-body">
           <p>There is one jersey.</p>
           <p>It has a limited number of spots.</p>
-          <p>Every new day starts at a higher price.</p>
+          <p>Every spot claimed makes the next one pricier.</p>
           <p>The earlier you get in, the less you pay.</p>
           <p>That's the whole idea.</p>
         </div>

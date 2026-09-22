@@ -14,20 +14,18 @@ export interface Spot {
   website?: string;
   logoUrl?: string;
   pricePaid?: number;
-  purchaseDay?: number;
+  /** 1-indexed position this spot was claimed in (1 = the very first sale) */
+  purchaseRank?: number;
   purchasedAt?: string;
   isDemo?: boolean;
 }
 
 export interface PricingConfig {
   basePrice: number;
+  /** multiplier applied per spot sold, e.g. 1.08 = price rises ~8% with every claim */
   growthMultiplier: number;
-  /** length of one pricing "day" in milliseconds */
-  pricingInterval: number;
   maximumPrice: number | null;
   currency: string;
-  /** ISO date string the project (and Day 1 pricing) started */
-  projectStartDate: string;
 }
 
 export interface ActivityEntry {
@@ -50,7 +48,6 @@ export interface PendingClaim {
 
 export interface AppState {
   config: PricingConfig;
-  demoDay: number | null;
   spots: Spot[];
   activity: ActivityEntry[];
   selectionMode: boolean;

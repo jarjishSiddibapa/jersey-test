@@ -1,7 +1,26 @@
-.jersey-svg {
+.jersey-svg,
+.character-svg {
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+/* ---- character (hero only) ---- */
+
+.character-head,
+.character-neck,
+.character-shorts,
+.character-leg {
+  fill: #35373c;
+}
+
+.character-shoe rect {
+  fill: #46484d;
+}
+
+.character-shoe-sole {
+  fill: var(--color-accent);
+  opacity: 0.6;
 }
 
 .jersey-hem-stripe {

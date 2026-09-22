@@ -1,5 +1,5 @@
 import type { ActivityEntry, PricingConfig, Spot } from "../types";
-import { getPriceForDay } from "../services/pricing";
+import { getPriceForRank } from "../services/pricing";
 import { minutesAgoIso } from "../utils/dates";
 
 export const DEMO_BUYER_NAMES = [
@@ -103,14 +103,18 @@ export interface SeedResult {
 
 /**
  * Fills `count` available spots with demo buyers so the jersey looks
- * populated. Deterministic per call via `seed` so results are reproducible
- * within a session but can be varied by the caller (e.g. Date.now()).
+ * populated. Each seeded spot is treated as the next sale in sequence, so
+ * it follows the exact same per-spot pricing curve real purchases do -
+ * `startRank` is the rank (1-indexed) of the first spot this call seeds,
+ * i.e. the number of spots already claimed, plus one. Deterministic per
+ * call via `seed` so results are reproducible within a session but can be
+ * varied by the caller (e.g. Date.now()).
  */
 export function seedDemoBuyers(
   spots: Spot[],
   count: number,
   config: PricingConfig,
-  currentDay: number,
+  startRank: number,
   seed: number = 42,
 ): SeedResult {
   const rng = mulberry32(seed);
@@ -124,15 +128,14 @@ export function seedDemoBuyers(
   const targets = shuffled.slice(0, Math.min(count, shuffled.length));
   const nextSpots = [...spots];
   const activity: ActivityEntry[] = [];
-  const usedNames: string[] = [];
 
   targets.forEach((target, index) => {
     const name = DEMO_BUYER_NAMES[Math.floor(rng() * DEMO_BUYER_NAMES.length)];
-    usedNames.push(name);
-    const day = 1 + Math.floor(rng() * rng() * currentDay);
-    const boundedDay = Math.min(Math.max(day, 1), currentDay);
-    const price = getPriceForDay(config, boundedDay);
-    const minutesAgo = Math.floor(rng() * 60 * 24 * 6) + index;
+    const rank = startRank + index;
+    const price = getPriceForRank(config, rank);
+    // Earlier ranks look further in the past, later ranks more recent, so
+    // "earliest members" and the activity feed stay in a sensible order.
+    const minutesAgo = Math.floor(rng() * 20) + (targets.length - index) * 3;
     const purchasedAt = minutesAgoIso(minutesAgo);
     const hasWebsite = DEMO_WEBSITES.has(name);
 
@@ -143,7 +146,7 @@ export function seedDemoBuyers(
       buyerName: name,
       website: hasWebsite ? `${slugify(name)}.co` : undefined,
       pricePaid: price,
-      purchaseDay: boundedDay,
+      purchaseRank: rank,
       purchasedAt,
       isDemo: true,
     };
