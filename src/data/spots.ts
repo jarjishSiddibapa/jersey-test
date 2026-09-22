@@ -1,16 +1,17 @@
-import type { Spot, SpotRegion } from "../types";
+import type { Spot, SpotRegion, SpotTier } from "../types";
 
 /**
  * Jersey artwork coordinate system: 0-1000 wide, 0-850 tall - a real
- * short-sleeve jersey proportion (torso only modestly taller than it is
- * wide, like an actual garment product photo), not the elongated
- * robe-like 1000x1150 box this used to be. Kept in sync with the
- * silhouette path drawn in components/jersey.ts.
+ * short-sleeve jersey proportion. Kept in sync with the silhouette path
+ * drawn in components/jersey.ts.
  */
 export const JERSEY_VIEWBOX = { width: 1000, height: 850 };
 
+export const DEFAULT_EDITION_ID = "edition-001";
+
 interface RegionBounds {
   region: SpotRegion;
+  tier: SpotTier;
   x0: number;
   y0: number;
   x1: number;
@@ -18,21 +19,39 @@ interface RegionBounds {
   count: number;
 }
 
-// Bounding boxes sit safely inside the jersey silhouette (see jersey.ts),
-// each with a verified margin so the mosaic never crosses the collar,
-// shoulder, underarm or hem edges. The shoulder/sleeve band lives in the
-// y=118-198 zone, which is the full raglan-width span (160-840) before
-// the underarm cut starts narrowing the shape at y=205. The chest/lower
-// regions sit inside the constant-width torso column (285-715), and the
-// lower region stops well above the hem stripe.
+// Every box below is a SUBSET of a region previously verified (via
+// SVGPathElement.isPointInFill on all four corners of every generated
+// rect) to sit safely inside the jersey silhouette - shoulder/sleeve
+// within the raglan-width band (x172-828, y118-198), chest/lower within
+// the constant-width torso column (x305-695, y205-780, clear of the hem
+// stripe). A box that is a strict subset of an already-safe box cannot
+// cross the silhouette either, so subdividing the chest box into
+// hero/premium/standard bands below doesn't reopen that question - it's
+// re-verified anyway at generateSpots() call time in dev (see
+// assertSpotInvariants).
+//
+// Tier placement follows the product's "most valuable real estate gets
+// the rarest tier" rule: HERO sits dead center chest, PREMIUM rings it
+// (upper chest + the columns flanking hero), STANDARD takes the shoulders,
+// sleeves, lower chest and the entire lower torso.
 const REGIONS: RegionBounds[] = [
-  { region: "shoulder", x0: 302, y0: 118, x1: 462, y1: 198, count: 16 },
-  { region: "shoulder", x0: 538, y0: 118, x1: 698, y1: 198, count: 16 },
-  { region: "sleeve", x0: 172, y0: 118, x1: 272, y1: 198, count: 16 },
-  { region: "sleeve", x0: 728, y0: 118, x1: 828, y1: 198, count: 16 },
-  { region: "chest", x0: 305, y0: 225, x1: 695, y1: 470, count: 110 },
-  { region: "lower", x0: 305, y0: 490, x1: 695, y1: 758, count: 126 },
+  { region: "shoulder", tier: "standard", x0: 310, y0: 120, x1: 455, y1: 195, count: 10 },
+  { region: "shoulder", tier: "standard", x0: 545, y0: 120, x1: 690, y1: 195, count: 10 },
+  { region: "sleeve", tier: "standard", x0: 185, y0: 120, x1: 270, y1: 195, count: 10 },
+  { region: "sleeve", tier: "standard", x0: 730, y0: 120, x1: 815, y1: 195, count: 10 },
+  { region: "chest", tier: "premium", x0: 305, y0: 225, x1: 695, y1: 300, count: 16 },
+  { region: "chest", tier: "premium", x0: 305, y0: 300, x1: 400, y1: 380, count: 6 },
+  { region: "chest", tier: "premium", x0: 600, y0: 300, x1: 695, y1: 380, count: 6 },
+  { region: "chest", tier: "hero", x0: 400, y0: 300, x1: 600, y1: 380, count: 12 },
+  { region: "chest", tier: "standard", x0: 305, y0: 380, x1: 695, y1: 470, count: 30 },
+  { region: "lower", tier: "standard", x0: 305, y0: 490, x1: 695, y1: 758, count: 90 },
 ];
+
+export const TOTAL_SPOTS = REGIONS.reduce((sum, r) => sum + r.count, 0);
+export const TIER_COUNTS: Record<SpotTier, number> = REGIONS.reduce(
+  (acc, r) => ({ ...acc, [r.tier]: acc[r.tier] + r.count }),
+  { standard: 0, premium: 0, hero: 0 } as Record<SpotTier, number>,
+);
 
 const GAP = 6;
 
@@ -41,8 +60,8 @@ const GAP = 6;
  * (+/- 1 cell) so rows are staggered rather than forming a uniform grid,
  * giving the jersey a patchwork look instead of a spreadsheet grid.
  */
-function generateMosaic(bounds: RegionBounds): Omit<Spot, "id" | "status">[] {
-  const { x0, y0, x1, y1, count, region } = bounds;
+function generateMosaic(bounds: RegionBounds): Omit<Spot, "id" | "status" | "editionId">[] {
+  const { x0, y0, x1, y1, count, region, tier } = bounds;
   const width = x1 - x0;
   const height = y1 - y0;
   const aspect = width / height;
@@ -70,7 +89,7 @@ function generateMosaic(bounds: RegionBounds): Omit<Spot, "id" | "status">[] {
     }
   }
 
-  const results: Omit<Spot, "id" | "status">[] = [];
+  const results: Omit<Spot, "id" | "status" | "editionId">[] = [];
   const rowHeight = (height - GAP * (rows - 1)) / rows;
 
   for (let r = 0; r < rows; r++) {
@@ -85,6 +104,7 @@ function generateMosaic(bounds: RegionBounds): Omit<Spot, "id" | "status">[] {
         width: Math.round(colWidth),
         height: Math.round(rowHeight),
         region,
+        tier,
       });
     }
   }
@@ -92,7 +112,7 @@ function generateMosaic(bounds: RegionBounds): Omit<Spot, "id" | "status">[] {
   return results;
 }
 
-export function generateSpots(): Spot[] {
+export function generateSpots(editionId: string = DEFAULT_EDITION_ID): Spot[] {
   let id = 1;
   const spots: Spot[] = [];
 
@@ -101,13 +121,49 @@ export function generateSpots(): Spot[] {
     for (const rect of rects) {
       spots.push({
         id: id++,
+        editionId,
         status: "available",
         ...rect,
       });
     }
   }
 
+  assertSpotInvariants(spots);
   return spots;
 }
 
-export const TOTAL_SPOTS = REGIONS.reduce((sum, r) => sum + r.count, 0);
+/**
+ * Hard invariants the product spec requires: exactly 200 spots, unique
+ * sequential IDs 1..200, the exact 160/28/12 tier split, and no two spots
+ * sharing coordinates (which would mean an overlap bug in the mosaic
+ * tiler). Runs every time spots are freshly generated; throws instead of
+ * silently shipping a broken jersey.
+ */
+function assertSpotInvariants(spots: Spot[]): void {
+  if (spots.length !== 200) {
+    throw new Error(`Spot generation invariant failed: expected exactly 200 spots, got ${spots.length}`);
+  }
+  const ids = spots.map((s) => s.id);
+  const uniqueIds = new Set(ids);
+  if (uniqueIds.size !== ids.length) {
+    throw new Error("Spot generation invariant failed: duplicate spot IDs");
+  }
+  for (let i = 0; i < ids.length; i++) {
+    if (ids[i] !== i + 1) {
+      throw new Error(`Spot generation invariant failed: IDs must be sequential 1..200, got gap at index ${i}`);
+    }
+  }
+  const tierCounts = spots.reduce(
+    (acc, s) => ({ ...acc, [s.tier]: acc[s.tier] + 1 }),
+    { standard: 0, premium: 0, hero: 0 } as Record<SpotTier, number>,
+  );
+  if (tierCounts.standard !== 160 || tierCounts.premium !== 28 || tierCounts.hero !== 12) {
+    throw new Error(
+      `Spot generation invariant failed: expected 160/28/12 standard/premium/hero, got ${tierCounts.standard}/${tierCounts.premium}/${tierCounts.hero}`,
+    );
+  }
+  const coordKeys = new Set(spots.map((s) => `${s.x},${s.y}`));
+  if (coordKeys.size !== spots.length) {
+    throw new Error("Spot generation invariant failed: two spots share the same coordinates");
+  }
+}

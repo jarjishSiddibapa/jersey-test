@@ -12,7 +12,7 @@ export function renderActivityFeed(state: AppState, now: number): string {
         <div class="activity-row">
           <span class="activity-row__who">${escapeHtml(entry.buyerName)}</span>
           <span class="activity-row__mid">claimed Spot #${entry.spotId}</span>
-          <span class="activity-row__price">${formatPrice(entry.pricePaid, state.config.currency)}</span>
+          <span class="activity-row__price">${formatPrice(entry.pricePaid, state.campaign.pricing.currency)}</span>
           <span class="activity-row__time">${formatRelativeTime(entry.timestamp, now)}</span>
         </div>
       `,

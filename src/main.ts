@@ -2,9 +2,13 @@ import "./styles/globals.css";
 import "./styles/jersey.css";
 
 import { store } from "./state/appState";
-import { getCurrentPrice, getRemainingSpotCount } from "./services/pricing";
+import { getCurrentBasePrice, getRemainingSpotCount } from "./services/pricing";
 import { formatPrice } from "./utils/formatting";
 import { processLogoFile, validateLogoFile } from "./utils/imageProcessing";
+import { parseHash } from "./router";
+import { spotPublicUrl } from "./services/urls";
+import { captureAttribution } from "./services/attribution";
+import { ConsoleAnalyticsProvider } from "./services/analytics";
 
 import { renderHeader } from "./components/header";
 import { renderHero } from "./components/hero";
@@ -20,9 +24,64 @@ import { renderFooter } from "./components/footer";
 import { renderClaimForm, renderClaimCheckout } from "./components/claimModal";
 import { renderSuccessPanel } from "./components/successModal";
 import { renderSpotProfile } from "./components/spotProfile";
-import { renderPrototypeAdmin } from "./components/prototypeAdmin";
+import { renderDevTools } from "./components/devTools";
+import { renderSpotPage } from "./components/spotPage";
+import { renderLegalPage } from "./components/legalPage";
 
 const root = document.querySelector<HTMLDivElement>("#app")!;
+const attribution = captureAttribution();
+const analytics = new ConsoleAnalyticsProvider(attribution);
+
+// ---------------- Routing ----------------
+
+store.setRoute(parseHash());
+window.addEventListener("hashchange", () => store.setRoute(parseHash()));
+
+function updateMetaTags(): void {
+  const state = store.getState();
+  const route = state.route;
+  let title = "The Internet Jersey — Own a Spot on the Internet";
+  let description = "200 spots. One jersey. Every claim makes the next one more expensive.";
+
+  if (route.name === "spot") {
+    const spot = state.spots.find((s) => s.id === route.id);
+    if (spot?.status === "claimed") {
+      title = `Spot #${spot.id} — The Internet Jersey`;
+      description = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on The Internet Jersey.`;
+    }
+  } else if (route.name === "legal") {
+    title = `${route.slug} — The Internet Jersey`;
+  }
+
+  document.title = title;
+  document.querySelector('meta[name="description"]')?.setAttribute("content", description);
+  document.querySelector('meta[property="og:title"]')?.setAttribute("content", title);
+  document.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+  document.querySelector('meta[property="og:url"]')?.setAttribute("content", window.location.href);
+}
+
+// ---------------- Focus management for modals ----------------
+
+let lastFocusedBeforeModal: HTMLElement | null = null;
+
+function trapFocus(container: HTMLElement, e: KeyboardEvent): void {
+  if (e.key !== "Tab") return;
+  const focusable = container.querySelectorAll<HTMLElement>(
+    'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+  );
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (e.shiftKey && document.activeElement === first) {
+    e.preventDefault();
+    last.focus();
+  } else if (!e.shiftKey && document.activeElement === last) {
+    e.preventDefault();
+    first.focus();
+  }
+}
+
+// ---------------- Render ----------------
 
 function renderOverlay(): string {
   const state = store.getState();
@@ -44,46 +103,61 @@ function renderOverlay(): string {
 
 function renderStickyCta(): string {
   const state = store.getState();
+  if (state.route.name !== "home") return "";
   const remaining = getRemainingSpotCount(state.spots);
   if (remaining === 0) {
     return `<div class="sticky-cta"><span class="sticky-cta__price">The jersey is full</span></div>`;
   }
-  const price = getCurrentPrice(state.config, state.spots);
+  const price = getCurrentBasePrice(state.campaign.pricing, state.spots);
   return `
     <div class="sticky-cta">
-      <span class="sticky-cta__price">Current: <span>${formatPrice(price, state.config.currency)}</span></span>
-      <button class="btn btn-accent" data-action="start-claim">Claim your spot</button>
+      <span class="sticky-cta__price">Current: <span>${formatPrice(price, state.campaign.pricing.currency)}</span></span>
+      <button class="btn btn-accent" data-action="start-claim">Claim a spot</button>
     </div>
   `;
 }
 
-function render(): void {
-  const state = store.getState();
-  const now = Date.now();
-  const price = getCurrentPrice(state.config, state.spots);
-
-  // preserve focus/selection on the live search input across re-renders
-  const active = document.activeElement as HTMLInputElement | null;
-  const wasSearchFocused = active?.getAttribute("data-role") === "search-input";
-  const selStart = wasSearchFocused ? active!.selectionStart : null;
-  const selEnd = wasSearchFocused ? active!.selectionEnd : null;
-
-  root.innerHTML = `
-    ${renderHeader()}
+function renderHome(state: ReturnType<typeof store.getState>): string {
+  return `
     ${renderHero(state)}
     ${renderStats(state)}
     ${renderWhyCards()}
-    ${renderActivityFeed(state, now)}
+    ${renderActivityFeed(state, Date.now())}
     ${renderFomo(state)}
     ${renderHowItWorks()}
     ${renderExplorer(state)}
     ${renderLeaderboard(state)}
     ${renderAbout()}
-    ${renderFooter()}
+  `;
+}
+
+function render(): void {
+  const state = store.getState();
+  const price = getCurrentBasePrice(state.campaign.pricing, state.spots);
+
+  const active = document.activeElement as HTMLInputElement | null;
+  const wasSearchFocused = active?.getAttribute("data-role") === "search-input";
+  const selStart = wasSearchFocused ? active!.selectionStart : null;
+  const selEnd = wasSearchFocused ? active!.selectionEnd : null;
+
+  const page =
+    state.route.name === "spot"
+      ? renderSpotPage(state, state.route.id)
+      : state.route.name === "legal"
+        ? renderLegalPage(state.route.slug)
+        : renderHome(state);
+
+  root.innerHTML = `
+    ${renderHeader()}
+    ${page}
+    ${state.route.name === "home" ? renderFooter() : ""}
     ${renderStickyCta()}
-    ${renderPrototypeAdmin(state, price)}
+    ${renderDevTools(state, price)}
     ${renderOverlay()}
   `;
+
+  updateMetaTags();
+  document.body.classList.toggle("has-sticky-cta", state.route.name === "home");
 
   if (wasSearchFocused) {
     const next = root.querySelector<HTMLInputElement>('[data-role="search-input"]');
@@ -95,14 +169,21 @@ function render(): void {
 
   const claimNameInput = root.querySelector<HTMLInputElement>('[data-role="name-input"]');
   if (claimNameInput && state.claimStep === "form") {
-    // Only autofocus a freshly opened, empty form so success/back
-    // transitions don't yank focus away from the user.
     if (!state.pendingClaim?.buyerName) claimNameInput.focus();
+  }
+
+  const overlay = root.querySelector<HTMLElement>('[data-role="overlay"]');
+  if (overlay && !lastFocusedBeforeModal) {
+    lastFocusedBeforeModal = document.activeElement as HTMLElement;
+  } else if (!overlay && lastFocusedBeforeModal) {
+    lastFocusedBeforeModal.focus?.();
+    lastFocusedBeforeModal = null;
   }
 }
 
 store.subscribe(render);
 render();
+analytics.track("page_view");
 
 // ---------------- Tooltip ----------------
 
@@ -118,6 +199,8 @@ function ensureTooltip(): HTMLDivElement {
   return tooltipEl;
 }
 
+const TIER_LABEL: Record<string, string> = { standard: "Standard", premium: "Premium", hero: "Hero" };
+
 function showTooltip(target: SVGGElement, clientX: number, clientY: number): void {
   const spotId = Number(target.getAttribute("data-spot-id"));
   const state = store.getState();
@@ -126,15 +209,21 @@ function showTooltip(target: SVGGElement, clientX: number, clientY: number): voi
 
   const tip = ensureTooltip();
   if (spot.status === "available") {
-    const price = getCurrentPrice(state.config, state.spots);
+    const price = getCurrentBasePrice(state.campaign.pricing, state.spots);
+    const multiplier = spot.tier === "standard" ? 1 : spot.tier === "premium" ? 3 : 5;
+    tip.innerHTML = `
+      <div class="spot-tooltip__title">Spot #${spot.id} &middot; ${TIER_LABEL[spot.tier]}</div>
+      <div class="spot-tooltip__price">${formatPrice(price * multiplier, state.campaign.pricing.currency)}</div>
+      <div class="spot-tooltip__sub">Click to claim</div>
+    `;
+  } else if (spot.status === "reserved") {
     tip.innerHTML = `
       <div class="spot-tooltip__title">Spot #${spot.id}</div>
-      <div class="spot-tooltip__price">${formatPrice(price, state.config.currency)}</div>
-      <div class="spot-tooltip__sub">Click to claim</div>
+      <div class="spot-tooltip__sub">Someone is checking out right now</div>
     `;
   } else {
     tip.innerHTML = `
-      <div class="spot-tooltip__title">Spot #${spot.id}</div>
+      <div class="spot-tooltip__title">Spot #${spot.id} &middot; ${TIER_LABEL[spot.tier]}</div>
       <div class="spot-tooltip__sub">${spot.buyerName ?? ""}</div>
     `;
   }
@@ -171,8 +260,6 @@ document.addEventListener(
   true,
 );
 
-// touch devices don't fire mouseout reliably, so the tooltip can get
-// stuck visible after a tap; clear it on the gestures that follow one.
 document.addEventListener("touchstart", hideTooltip, { passive: true });
 document.addEventListener("scroll", hideTooltip, true);
 
@@ -182,37 +269,56 @@ function scrollToExplorer(): void {
   document.getElementById("explorer")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function activateSpot(spotId: number): void {
+  const state = store.getState();
+  const spot = state.spots.find((s) => s.id === spotId);
+  if (spot?.status === "available") {
+    if (state.selectionMode) {
+      store.toggleSpotSelection(spotId);
+    } else {
+      store.selectSingleSpot(spotId);
+      analytics.track("spot_selected", { spotId });
+    }
+  } else if (spot?.status === "claimed") {
+    store.viewSpot(spotId);
+    store.trackProfileView(spotId);
+    analytics.track("public_spot_view", { spotId });
+  }
+  hideTooltip();
+}
+
 document.addEventListener("click", (e) => {
   const el = e.target as HTMLElement;
 
   const spotEl = el.closest<SVGGElement>(".jersey-spot");
   if (spotEl) {
-    const spotId = Number(spotEl.getAttribute("data-spot-id"));
-    const state = store.getState();
-    const spot = state.spots.find((s) => s.id === spotId);
-    if (spot?.status === "available") {
-      store.selectSpot(spotId);
-    } else if (spot?.status === "claimed") {
-      store.viewSpot(spotId);
-    }
-    hideTooltip();
+    activateSpot(Number(spotEl.getAttribute("data-spot-id")));
     return;
   }
 
   const actionEl = el.closest<HTMLElement>("[data-action]");
   if (!actionEl) return;
   const action = actionEl.getAttribute("data-action");
+  const spotIdAttr = actionEl.getAttribute("data-spot-id");
+  const spotId = spotIdAttr ? Number(spotIdAttr) : null;
 
   switch (action) {
     case "start-claim":
-      store.enterSelectionMode();
       scrollToExplorer();
       break;
     case "explore-jersey":
       scrollToExplorer();
       break;
+    case "enter-multi-select":
+      store.enterSelectionMode();
+      scrollToExplorer();
+      break;
     case "cancel-selection":
       store.exitSelectionMode();
+      break;
+    case "confirm-multi-select":
+      store.confirmMultiSelection();
+      analytics.track("checkout_started");
       break;
     case "close-claim":
       store.cancelClaim();
@@ -224,7 +330,7 @@ document.addEventListener("click", (e) => {
       store.backToForm();
       break;
     case "simulate-payment":
-      void store.confirmPayment();
+      void handlePayment();
       break;
     case "remove-logo":
       store.updatePendingClaim({ logoUrl: undefined });
@@ -236,29 +342,49 @@ document.addEventListener("click", (e) => {
     case "share-spot":
       void handleShare();
       break;
+    case "share-spot-page":
+      if (spotId !== null) void handleSpotPageShare(spotId);
+      break;
+    case "visit-spot-website":
+      if (spotId !== null) {
+        store.trackOutboundClick(spotId);
+        analytics.track("outbound_click", { spotId });
+      }
+      break;
+    // Everything below this point is dev/demo-only tooling. Guarding each
+    // case behind import.meta.env?.DEV (a compile-time constant) means
+    // these branches - not just the buttons that would trigger them - are
+    // dead-code-eliminated from the production bundle, so they're inert
+    // even against a hand-crafted click event in production.
     case "toggle-admin":
-      store.toggleAdmin();
+      if (import.meta.env?.DEV) store.toggleDevTools();
       break;
     case "close-admin":
-      store.toggleAdmin();
+      if (import.meta.env?.DEV) store.closeDevTools();
       break;
     case "simulate-one":
-      store.seedDemoBuyers(1);
+      if (import.meta.env?.DEV) store.seedDemoBuyers(1);
       break;
     case "seed-data":
-      store.seedDemoBuyers(30);
+      if (import.meta.env?.DEV) store.seedDemoBuyers(30);
       break;
     case "fill-50":
-      store.fillToPercent(0.5);
+      if (import.meta.env?.DEV) store.fillToPercent(0.5);
       break;
     case "fill-90":
-      store.fillToPercent(0.9);
+      if (import.meta.env?.DEV) store.fillToPercent(0.9);
       break;
     case "sold-out":
-      store.soldOut();
+      if (import.meta.env?.DEV) store.soldOut();
+      break;
+    case "moderate-approve":
+      if (import.meta.env?.DEV && spotId !== null) store.setModerationStatus(spotId, "approved");
+      break;
+    case "moderate-reject":
+      if (import.meta.env?.DEV && spotId !== null) store.setModerationStatus(spotId, "rejected");
       break;
     case "reset-all":
-      if (window.confirm("Reset prototype data? This clears all claims and demo data.")) {
+      if (import.meta.env?.DEV && window.confirm("Reset local prototype data? This clears all claims and demo data in this browser.")) {
         store.resetAllData();
       }
       break;
@@ -271,7 +397,6 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// clicking the dimmed overlay background (not its panel content) closes it
 document.addEventListener("click", (e) => {
   const target = e.target as HTMLElement;
   if (target.getAttribute("data-role") === "overlay") {
@@ -281,12 +406,24 @@ document.addEventListener("click", (e) => {
   }
 });
 
+// ---------------- Keyboard activation for jersey spots ----------------
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const target = e.target as Element;
+  const spotEl = target.closest?.(".jersey-spot") as SVGGElement | null;
+  if (!spotEl) return;
+  e.preventDefault();
+  activateSpot(Number(spotEl.getAttribute("data-spot-id")));
+});
+
 // ---------------- Search ----------------
 
 document.addEventListener("input", (e) => {
   const el = e.target as HTMLElement;
   if (el.getAttribute("data-role") === "search-input") {
     store.setSearchQuery((el as HTMLInputElement).value);
+    analytics.track("search_used");
   }
 });
 
@@ -298,22 +435,28 @@ document.addEventListener("submit", (e) => {
   e.preventDefault();
 
   const nameInput = form.querySelector<HTMLInputElement>('[data-role="name-input"]');
+  const companyInput = form.querySelector<HTMLInputElement>('[data-role="company-input"]');
+  const emailInput = form.querySelector<HTMLInputElement>('[data-role="email-input"]');
   const websiteInput = form.querySelector<HTMLInputElement>('[data-role="website-input"]');
-  const name = nameInput?.value.trim() ?? "";
+  const taglineInput = form.querySelector<HTMLInputElement>('[data-role="tagline-input"]');
+  const termsInput = form.querySelector<HTMLInputElement>('[data-role="terms-input"]');
 
-  if (!name) {
-    nameInput?.focus();
-    return;
-  }
-
-  store.updatePendingClaim({ buyerName: name, website: websiteInput?.value.trim() ?? "" });
+  store.updatePendingClaim({
+    buyerName: nameInput?.value.trim() ?? "",
+    company: companyInput?.value.trim() ?? "",
+    email: emailInput?.value.trim() ?? "",
+    website: websiteInput?.value.trim() ?? "",
+    tagline: taglineInput?.value.trim() ?? "",
+    agreedToTerms: termsInput?.checked ?? false,
+  });
   store.goToCheckout();
 });
 
 // ---------------- Logo upload ----------------
 
 async function handleLogoFile(file: File): Promise<void> {
-  const error = validateLogoFile(file);
+  analytics.track("logo_upload_started");
+  const error = await validateLogoFile(file);
   const errorEl = document.querySelector<HTMLElement>('[data-role="logo-error"]');
   if (error) {
     if (errorEl) errorEl.textContent = error;
@@ -327,6 +470,7 @@ async function handleLogoFile(file: File): Promise<void> {
     return;
   }
   store.updatePendingClaim({ logoUrl: result.dataUrl });
+  analytics.track("logo_upload_completed");
 }
 
 document.addEventListener("change", (e) => {
@@ -365,29 +509,34 @@ document.addEventListener("drop", (e) => {
   if (file) void handleLogoFile(file);
 });
 
+// ---------------- Payment ----------------
+
+async function handlePayment(): Promise<void> {
+  analytics.track("payment_started");
+  const result = await store.confirmPayment();
+  if (result.success) {
+    analytics.track("payment_succeeded");
+    return;
+  }
+  analytics.track("payment_failed", { error: result.error });
+  const errorEl = document.querySelector<HTMLElement>('[data-role="checkout-error"]');
+  if (errorEl) errorEl.textContent = result.error ?? "Payment failed. Please try again.";
+}
+
 // ---------------- Share ----------------
 
-async function handleShare(): Promise<void> {
-  const state = store.getState();
-  const spot = state.spots.find((s) => s.id === state.lastPurchasedSpotId);
-  if (!spot) return;
-
-  const message = `I just claimed a spot on The Internet Jersey for ${formatPrice(
-    spot.pricePaid ?? 0,
-    state.config.currency,
-  )}. What spot would you take?`;
-
+async function copyOrShare(message: string, url: string): Promise<void> {
+  const shareText = `${message} ${url}`;
   if (navigator.share) {
     try {
-      await navigator.share({ text: message, title: "The Internet Jersey" });
+      await navigator.share({ text: message, url, title: "The Internet Jersey" });
       return;
     } catch {
       // user cancelled the native share sheet; fall through to clipboard
     }
   }
-
   try {
-    await navigator.clipboard.writeText(message);
+    await navigator.clipboard.writeText(shareText);
     const toast = document.querySelector<HTMLElement>('[data-role="copy-toast"]');
     if (toast) {
       toast.style.display = "block";
@@ -396,8 +545,33 @@ async function handleShare(): Promise<void> {
       }, 1800);
     }
   } catch {
-    // clipboard API unavailable; nothing more we can do in-prototype
+    // clipboard API unavailable; nothing more we can do client-side
   }
+}
+
+async function handleShare(): Promise<void> {
+  const state = store.getState();
+  const spotIds = state.pendingClaim?.spotIds ?? [];
+  const first = spotIds[0];
+  if (first === undefined) return;
+  const spot = state.spots.find((s) => s.id === first);
+  if (!spot) return;
+
+  const message =
+    spotIds.length > 1
+      ? `I just claimed ${spotIds.length} spots on The Internet Jersey.`
+      : `I just claimed Spot #${spot.id} on The Internet Jersey.`;
+  await copyOrShare(message, spotPublicUrl(spot.id));
+  analytics.track("spot_shared", { spotId: spot.id });
+}
+
+async function handleSpotPageShare(spotId: number): Promise<void> {
+  const state = store.getState();
+  const spot = state.spots.find((s) => s.id === spotId);
+  if (!spot) return;
+  const message = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on The Internet Jersey.`;
+  await copyOrShare(message, spotPublicUrl(spot.id));
+  analytics.track("spot_shared", { spotId });
 }
 
 // ---------------- Keyboard shortcuts ----------------
@@ -407,11 +581,10 @@ document.addEventListener("keydown", (e) => {
     const state = store.getState();
     if (state.claimStep) store.cancelClaim();
     else if (state.viewingSpotId !== null) store.closeSpotProfile();
-    else if (state.prototypeAdminOpen) store.closeAdmin();
+    else if (state.devToolsOpen) store.closeDevTools();
     else if (state.selectionMode) store.exitSelectionMode();
   }
-  if (e.ctrlKey && e.shiftKey && (e.key === "D" || e.key === "d")) {
-    e.preventDefault();
-    store.toggleAdmin();
-  }
+
+  const overlay = root.querySelector<HTMLElement>('[data-role="overlay"]');
+  if (overlay) trapFocus(overlay, e);
 });

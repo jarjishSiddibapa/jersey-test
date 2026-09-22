@@ -781,6 +781,296 @@ textarea {
   color: var(--color-muted);
 }
 
+/* ---------------- Tier badges ---------------- */
+
+.tier-badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 20px;
+  padding: 4px 10px;
+}
+
+.tier-badge--standard {
+  background: var(--color-secondary);
+  color: var(--color-primary);
+}
+
+.tier-badge--premium {
+  background: rgba(183, 255, 0, 0.22);
+  color: #3a5200;
+}
+
+.tier-badge--hero {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/* ---------------- Price card growth label ---------------- */
+
+.price-card__growth-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0;
+  font-weight: 600;
+}
+
+/* ---------------- Multi-select banner ---------------- */
+
+.selection-banner__actions {
+  display: flex;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+/* ---------------- Checkbox field ---------------- */
+
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12.5px;
+  color: #444;
+  line-height: 1.5;
+  margin: 4px 0 16px;
+  cursor: pointer;
+}
+
+.checkbox-field input {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+.checkbox-field a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+/* ---------------- Checkout breakdown ---------------- */
+
+.checkout-breakdown {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 14px;
+  margin-bottom: 20px;
+}
+
+/* ---------------- Moderation queue (dev tools) ---------------- */
+
+.moderation-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.moderation-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  padding: 6px 8px;
+  gap: 8px;
+}
+
+.moderation-row__actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.moderation-row__actions button {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: white;
+  border-radius: 5px;
+  padding: 3px 7px;
+  font-size: 11px;
+}
+
+/* ---------------- Legal pages ---------------- */
+
+.legal-page {
+  min-height: 60vh;
+  padding: 48px 0 96px;
+}
+
+.legal-page__inner {
+  max-width: 720px;
+}
+
+.legal-back {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-decoration: none;
+  margin-bottom: 24px;
+}
+
+.legal-back:hover {
+  color: var(--color-primary);
+}
+
+.legal-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.legal-nav__link {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-decoration: none;
+}
+
+.legal-nav__link--active,
+.legal-nav__link:hover {
+  color: var(--color-primary);
+}
+
+.legal-title {
+  font-size: clamp(26px, 3.4vw, 36px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0 0 8px;
+}
+
+.legal-updated {
+  font-size: 13px;
+  color: var(--color-muted);
+  margin: 0 0 20px;
+}
+
+.legal-disclaimer {
+  font-size: 13px;
+  color: var(--color-muted);
+  background: var(--color-secondary);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.legal-section {
+  margin-bottom: 28px;
+}
+
+.legal-section h2 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.legal-section p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #333;
+  margin: 0 0 10px;
+}
+
+/* ---------------- Public spot page ---------------- */
+
+.spot-page {
+  min-height: 70vh;
+  padding: 48px 0 96px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.spot-page__inner {
+  width: 100%;
+  max-width: 480px;
+}
+
+.spot-page__inner--empty {
+  text-align: left;
+}
+
+.spot-page__card {
+  background: var(--color-white);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 28px;
+}
+
+.spot-page__tier-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.spot-page__logo {
+  width: 96px;
+  height: 96px;
+  font-size: 24px;
+}
+
+.spot-page__name {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.spot-page__tagline {
+  font-size: 14.5px;
+  color: #444;
+  margin: 0 0 18px;
+}
+
+.spot-page__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  background: var(--color-secondary);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin: 18px 0;
+}
+
+.spot-page__stat-value {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.spot-page__stat-value--sm {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.spot-page__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin: 18px 0 6px;
+  text-align: center;
+}
+
+.spot-page__disclaimer {
+  font-size: 11.5px;
+  color: var(--color-muted);
+  text-align: center;
+  margin: 0 0 4px;
+}
+
+.spot-page__demo-note {
+  font-size: 11.5px;
+  color: var(--color-muted);
+  text-align: center;
+  margin-top: 10px;
+}
+
 /* ---------------- Sticky mobile CTA ---------------- */
 
 .sticky-cta {
@@ -1462,8 +1752,10 @@ textarea {
     padding: 48px 0;
   }
 
-  body {
-    padding-bottom: 0;
+  body.has-sticky-cta {
+    /* room for the fixed sticky-cta bar so it never overlaps the last
+       bit of scrollable content (e.g. the hero's own CTA button) */
+    padding-bottom: 84px;
   }
 
   .fomo-panel {

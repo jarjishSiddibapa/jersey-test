@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Only the static routes are listed. Spot pages (#/spot/:id) can't be
+  enumerated here: with no backend yet, spot data lives in each visitor's
+  own browser (localStorage), not on a server that could generate this
+  file per-claim. A real backend (see README) would generate this
+  dynamically and include every claimed spot's public URL.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/</loc>
+  </url>
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/#/terms</loc>
+  </url>
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/#/privacy</loc>
+  </url>
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/#/refunds</loc>
+  </url>
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/#/content-policy</loc>
+  </url>
+  <url>
+    <loc>https://jarjishsiddibapa.github.io/jersey-test/#/contact</loc>
+  </url>
+</urlset>

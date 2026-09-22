@@ -11,15 +11,6 @@ export function formatPrice(amount: number, currency = "USD"): string {
   return formatter.format(amount);
 }
 
-export function formatCountdown(ms: number): string {
-  const total = Math.max(0, Math.floor(ms / 1000));
-  const hours = Math.floor(total / 3600);
-  const minutes = Math.floor((total % 3600) / 60);
-  const seconds = total % 60;
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
-}
-
 export function formatRelativeTime(iso: string, now: number = Date.now()): string {
   const then = new Date(iso).getTime();
   const diffMs = Math.max(0, now - then);
@@ -50,7 +41,13 @@ export function escapeHtml(input: string): string {
 
 export function isSafeUrl(url: string): boolean {
   try {
-    const parsed = new URL(url, window.location.origin);
+    // Website inputs are always normalized to an absolute URL before
+    // reaching here (see normalizeWebsiteUrl), so a base is never
+    // actually needed to resolve them - but guard the `window` read
+    // anyway so this stays callable outside a browser (Node tests, a
+    // future SSR/build-time OG generation step) without throwing.
+    const base = typeof window !== "undefined" ? window.location.origin : undefined;
+    const parsed = new URL(url, base);
     return parsed.protocol === "http:" || parsed.protocol === "https:";
   } catch {
     return false;
@@ -62,4 +59,19 @@ export function normalizeWebsiteUrl(url: string): string {
   if (!trimmed) return "";
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
+}
+
+/**
+ * Normalizes, validates (http/https only) and HTML-attribute-escapes a
+ * user-submitted website URL in one step. Returns null for anything
+ * unsafe or malformed so callers can simply omit the link rather than
+ * ever interpolate a raw, un-escaped value into an href attribute - the
+ * un-escaped-href path is exactly how a website value like
+ * `https://x.com" onmouseover="...` would otherwise break out of the
+ * attribute and inject a live event handler.
+ */
+export function safeWebsiteHref(url: string): string | null {
+  const normalized = normalizeWebsiteUrl(url);
+  if (!normalized || !isSafeUrl(normalized)) return null;
+  return escapeHtml(normalized);
 }

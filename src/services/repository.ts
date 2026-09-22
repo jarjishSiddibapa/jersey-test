@@ -1,23 +1,37 @@
-import type { ActivityEntry, PricingConfig, Spot } from "../types";
+import type { ActivityEntry, Buyer, Campaign, Order, Spot } from "../types";
 import { LocalStorageService } from "./storage";
 
 /**
- * Storage-agnostic contract for reading/writing jersey state. The
+ * Storage-agnostic contract for reading/writing edition state. The
  * prototype implements this against localStorage; production would swap
- * in a SupabaseSpotRepository (or similar) behind the same interface.
+ * in a MySQL-backed repository behind the same interface (see README
+ * "Database schema" for the table shapes these methods map onto:
+ * campaigns, spots, orders, buyers, activity).
  */
 export interface SpotRepository {
+  loadCampaign(): Campaign | null;
+  saveCampaign(campaign: Campaign): void;
   loadSpots(): Spot[] | null;
   saveSpots(spots: Spot[]): void;
   loadActivity(): ActivityEntry[] | null;
   saveActivity(activity: ActivityEntry[]): void;
-  loadConfig(): PricingConfig | null;
-  saveConfig(config: PricingConfig): void;
+  loadOrders(): Order[] | null;
+  saveOrders(orders: Order[]): void;
+  loadBuyers(): Buyer[] | null;
+  saveBuyers(buyers: Buyer[]): void;
   clearAll(): void;
 }
 
 export class LocalSpotRepository implements SpotRepository {
   private readonly storage = new LocalStorageService("internet-jersey");
+
+  loadCampaign(): Campaign | null {
+    return this.storage.get<Campaign>("campaign");
+  }
+
+  saveCampaign(campaign: Campaign): void {
+    this.storage.set("campaign", campaign);
+  }
 
   loadSpots(): Spot[] | null {
     return this.storage.get<Spot[]>("spots");
@@ -35,15 +49,23 @@ export class LocalSpotRepository implements SpotRepository {
     this.storage.set("activity", activity);
   }
 
-  loadConfig(): PricingConfig | null {
-    return this.storage.get<PricingConfig>("config");
+  loadOrders(): Order[] | null {
+    return this.storage.get<Order[]>("orders");
   }
 
-  saveConfig(config: PricingConfig): void {
-    this.storage.set("config", config);
+  saveOrders(orders: Order[]): void {
+    this.storage.set("orders", orders);
+  }
+
+  loadBuyers(): Buyer[] | null {
+    return this.storage.get<Buyer[]>("buyers");
+  }
+
+  saveBuyers(buyers: Buyer[]): void {
+    this.storage.set("buyers", buyers);
   }
 
   clearAll(): void {
-    this.storage.clearAll(["spots", "activity", "config"]);
+    this.storage.clearAll(["campaign", "spots", "activity", "orders", "buyers"]);
   }
 }

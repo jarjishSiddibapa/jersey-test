@@ -75,10 +75,14 @@ export interface JerseyRenderOptions {
   highlightedIds?: Set<number>;
   dimUnhighlighted?: boolean;
   selectionMode?: boolean;
-  selectedSpotId?: number | null;
-  justClaimedSpotId?: number | null;
+  selectedSpotIds?: number[];
+  justClaimedSpotIds?: number[];
   idPrefix?: string;
+  /** false for a non-interactive preview (e.g. the small jersey shown inside the claim panel) - keeps 200 spot elements out of the keyboard tab order and off the accessibility tree when they're purely decorative. Defaults true. */
+  interactive?: boolean;
 }
+
+const TIER_LABEL: Record<string, string> = { standard: "Standard", premium: "Premium", hero: "Hero" };
 
 /**
  * Everything the jersey draws (gradient defs, silhouette, seams, spots) as
@@ -94,18 +98,24 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
     highlightedIds,
     dimUnhighlighted,
     selectionMode,
-    selectedSpotId,
-    justClaimedSpotId,
+    selectedSpotIds,
+    justClaimedSpotIds,
     idPrefix = "j",
+    interactive: jerseyInteractive = true,
   } = options;
   const clipId = `${idPrefix}-jersey-clip`;
 
   const spotNodes = spots
     .map((spot) => {
-      const classes = ["jersey-spot", `jersey-spot--${spot.status}`, `jersey-spot--${spot.region}`];
+      const classes = [
+        "jersey-spot",
+        `jersey-spot--${spot.status}`,
+        `jersey-spot--${spot.region}`,
+        `jersey-spot--tier-${spot.tier}`,
+      ];
       if (selectionMode && spot.status === "available") classes.push("jersey-spot--selectable");
-      if (selectedSpotId === spot.id) classes.push("jersey-spot--selected");
-      if (justClaimedSpotId === spot.id) classes.push("jersey-spot--just-claimed");
+      if (selectedSpotIds?.includes(spot.id)) classes.push("jersey-spot--selected");
+      if (justClaimedSpotIds?.includes(spot.id)) classes.push("jersey-spot--just-claimed");
       if (highlightedIds) {
         classes.push(highlightedIds.has(spot.id) ? "jersey-spot--match" : "jersey-spot--nomatch");
       } else if (dimUnhighlighted) {
@@ -118,9 +128,21 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
           class="jersey-spot-shape"
         />`;
       const content = spot.status === "claimed" ? renderLogoOrBadge(spot) : "";
+      const tierLabel = TIER_LABEL[spot.tier];
+      const label =
+        spot.status === "claimed"
+          ? `Spot ${spot.id}, ${tierLabel} tier, claimed by ${escapeHtml(spot.buyerName ?? "")}`
+          : spot.status === "reserved"
+            ? `Spot ${spot.id}, ${tierLabel} tier, being purchased by someone else right now`
+            : `Spot ${spot.id}, ${tierLabel} tier, available`;
+      const spotInteractive = jerseyInteractive && spot.status !== "reserved";
+      const accessibilityAttrs = !jerseyInteractive
+        ? 'aria-hidden="true"'
+        : spotInteractive
+          ? `tabindex="0" role="button" aria-label="${label}"`
+          : `aria-disabled="true" aria-label="${label}"`;
 
-      return `<g class="${classes.join(" ")}" data-spot-id="${spot.id}" tabindex="0" role="button"
-          aria-label="${spot.status === "claimed" ? `Spot ${spot.id}, claimed by ${escapeHtml(spot.buyerName ?? "")}` : `Spot ${spot.id}, available`}">
+      return `<g class="${classes.join(" ")}" data-spot-id="${spot.id}" ${accessibilityAttrs}>
           ${rect}
           ${content}
         </g>`;

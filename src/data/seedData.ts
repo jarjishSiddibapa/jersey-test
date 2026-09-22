@@ -1,7 +1,15 @@
 import type { ActivityEntry, PricingConfig, Spot } from "../types";
-import { getPriceForRank } from "../services/pricing";
+import { priceForSpot } from "../services/pricing";
 import { minutesAgoIso } from "../utils/dates";
 
+/**
+ * DEV-ONLY. Never runs in a production build - the only caller
+ * (state/appState.ts seedDemoBuyers) is itself gated behind
+ * `import.meta.env.DEV`, and the whole dev-tools panel that triggers it
+ * (components/devTools.ts) is compiled out of production bundles the
+ * same way (see section 32/61 of the product spec: no fake buyers, no
+ * fake activity, no simulation tools in production).
+ */
 export const DEMO_BUYER_NAMES = [
   "Nova",
   "PixelForge",
@@ -103,12 +111,10 @@ export interface SeedResult {
 
 /**
  * Fills `count` available spots with demo buyers so the jersey looks
- * populated. Each seeded spot is treated as the next sale in sequence, so
- * it follows the exact same per-spot pricing curve real purchases do -
- * `startRank` is the rank (1-indexed) of the first spot this call seeds,
- * i.e. the number of spots already claimed, plus one. Deterministic per
- * call via `seed` so results are reproducible within a session but can be
- * varied by the caller (e.g. Date.now()).
+ * populated in local dev. Each seeded spot is treated as the next sale
+ * in the real global sequence, so it follows the exact same pricing
+ * curve real purchases do - `startRank` is the rank (1-indexed) of the
+ * first spot this call seeds. Deterministic per call via `seed`.
  */
 export function seedDemoBuyers(
   spots: Spot[],
@@ -132,7 +138,7 @@ export function seedDemoBuyers(
   targets.forEach((target, index) => {
     const name = DEMO_BUYER_NAMES[Math.floor(rng() * DEMO_BUYER_NAMES.length)];
     const rank = startRank + index;
-    const price = getPriceForRank(config, rank);
+    const price = priceForSpot(config, rank, target.tier);
     // Earlier ranks look further in the past, later ranks more recent, so
     // "earliest members" and the activity feed stay in a sensible order.
     const minutesAgo = Math.floor(rng() * 20) + (targets.length - index) * 3;
@@ -148,6 +154,7 @@ export function seedDemoBuyers(
       pricePaid: price,
       purchaseRank: rank,
       purchasedAt,
+      moderationStatus: "approved",
       isDemo: true,
     };
 
@@ -155,6 +162,7 @@ export function seedDemoBuyers(
       id: `demo-${target.id}-${index}`,
       spotId: target.id,
       buyerName: name,
+      tier: target.tier,
       pricePaid: price,
       timestamp: purchasedAt,
       isDemo: true,

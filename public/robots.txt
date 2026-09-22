@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://jarjishsiddibapa.github.io/jersey-test/sitemap.xml

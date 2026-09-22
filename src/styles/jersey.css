@@ -115,6 +115,39 @@
   transform: scale(1.05);
 }
 
+/* ---- tiers: subtle at rest, more presence on hover, never a color carnival ---- */
+
+.jersey-spot--available.jersey-spot--tier-premium .jersey-spot-shape {
+  stroke: rgba(247, 247, 242, 0.2);
+  stroke-width: 1.5;
+}
+
+.jersey-spot--available.jersey-spot--tier-hero .jersey-spot-shape {
+  stroke: rgba(183, 255, 0, 0.32);
+  stroke-width: 1.75;
+}
+
+.jersey-spot--tier-premium.jersey-spot--selectable:hover .jersey-spot-shape,
+.jersey-spot--tier-premium.jersey-spot--selectable:focus-visible .jersey-spot-shape {
+  filter: drop-shadow(0 0 6px rgba(183, 255, 0, 0.35));
+}
+
+.jersey-spot--tier-hero.jersey-spot--selectable:hover .jersey-spot-shape,
+.jersey-spot--tier-hero.jersey-spot--selectable:focus-visible .jersey-spot-shape {
+  filter: drop-shadow(0 0 10px rgba(183, 255, 0, 0.5));
+  stroke-width: 2.5;
+}
+
+.jersey-spot--reserved {
+  cursor: not-allowed;
+}
+
+.jersey-spot--reserved .jersey-spot-shape {
+  fill: rgba(247, 247, 242, 0.03);
+  stroke: rgba(247, 247, 242, 0.1);
+  stroke-dasharray: 2 4;
+}
+
 .jersey-spot--selected .jersey-spot-shape {
   fill: rgba(183, 255, 0, 0.22) !important;
   stroke: var(--color-accent) !important;
