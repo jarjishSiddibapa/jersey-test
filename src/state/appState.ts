@@ -22,7 +22,6 @@ import { spotPublicUrl } from "../services/urls";
 
 type Listener = () => void;
 
-export const MAX_SELECTION = 9;
 const RESERVATION_SWEEP_MS = 30_000;
 
 function freshCampaign(): Campaign {
@@ -30,7 +29,7 @@ function freshCampaign(): Campaign {
     id: DEFAULT_EDITION_ID,
     slug: "edition-001",
     name: "Edition 001",
-    description: "The first Internet Jersey. 200 spots.",
+    description: "200 spots. One jersey. Every claim makes the next one pricier.",
     totalSpots: TOTAL_SPOTS,
     tierCounts: TIER_COUNTS,
     pricing: { ...DEFAULT_PRICING_CONFIG },
@@ -83,8 +82,6 @@ export class AppStore {
       campaign,
       spots,
       activity,
-      selectionMode: false,
-      selectedSpotIds: [],
       viewingSpotId: null,
       claimStep: null,
       pendingClaim: null,
@@ -134,38 +131,11 @@ export class AppStore {
 
   // ---- claim flow: selection ----
 
-  enterSelectionMode(): void {
-    this.setState({ selectionMode: true, selectedSpotIds: [] });
-  }
-
-  exitSelectionMode(): void {
-    this.setState({ selectionMode: false, selectedSpotIds: [] });
-  }
-
-  /** Fast path: clicking an available spot outside multi-select mode claims just that one. */
+  /** Clicking an available spot on the jersey claims just that one - one spot per claim, no multi-select. */
   selectSingleSpot(spotId: number): void {
     const spot = this.state.spots.find((s) => s.id === spotId);
     if (!spot || spot.status !== "available") return;
     this.beginClaim([spotId]);
-  }
-
-  /** Multi-select mode: clicking toggles membership in the running selection, up to MAX_SELECTION. */
-  toggleSpotSelection(spotId: number): void {
-    this.releaseExpiredReservations();
-    const spot = this.state.spots.find((s) => s.id === spotId);
-    if (!spot || spot.status !== "available") return;
-    const already = this.state.selectedSpotIds.includes(spotId);
-    if (already) {
-      this.setState({ selectedSpotIds: this.state.selectedSpotIds.filter((id) => id !== spotId) });
-      return;
-    }
-    if (this.state.selectedSpotIds.length >= MAX_SELECTION) return;
-    this.setState({ selectedSpotIds: [...this.state.selectedSpotIds, spotId] });
-  }
-
-  confirmMultiSelection(): void {
-    if (this.state.selectedSpotIds.length === 0) return;
-    this.beginClaim(this.state.selectedSpotIds);
   }
 
   private beginClaim(spotIds: number[]): void {
@@ -185,7 +155,7 @@ export class AppStore {
       tagline: "",
       agreedToTerms: false,
     };
-    this.setState({ spots, claimStep: "form", pendingClaim, formErrors: {}, selectionMode: false, selectedSpotIds: [] });
+    this.setState({ spots, claimStep: "form", pendingClaim, formErrors: {} });
   }
 
   updatePendingClaim(patch: Partial<PendingClaim>): void {
@@ -193,10 +163,7 @@ export class AppStore {
     this.setState({ pendingClaim: { ...this.state.pendingClaim, ...patch }, formErrors: {} });
   }
 
-  /** Validates the claim form and, if valid, advances to checkout. */
-  goToCheckout(): void {
-    const claim = this.state.pendingClaim;
-    if (!claim) return;
+  private validateClaim(claim: PendingClaim): Record<string, string> {
     const errors: Record<string, string> = {};
 
     if (!claim.buyerName.trim()) errors.buyerName = "Enter your name or brand.";
@@ -212,30 +179,31 @@ export class AppStore {
 
     if (claim.company.trim().length > 60) errors.company = "Keep it under 60 characters.";
     if (claim.tagline.trim().length > 90) errors.tagline = "Keep it under 90 characters.";
-    if (!claim.agreedToTerms) errors.agreedToTerms = "You need to agree to the terms to continue.";
+    if (!claim.agreedToTerms) errors.agreedToTerms = "You need to agree to the rules to continue.";
 
+    return errors;
+  }
+
+  /** Validates the form and, if valid, books the spot immediately - one action, no separate checkout/payment step. */
+  async bookSpot(): Promise<ClaimResult> {
+    const claim = this.state.pendingClaim;
+    if (!claim) return { success: false, error: "Nothing selected." };
+
+    const errors = this.validateClaim(claim);
     if (Object.keys(errors).length > 0) {
       this.setState({ formErrors: errors });
-      return;
+      return { success: false };
     }
-
-    this.setState({ claimStep: "checkout", formErrors: {} });
-  }
-
-  backToForm(): void {
-    this.setState({ claimStep: "form" });
-  }
-
-  async confirmPayment(): Promise<ClaimResult> {
-    const claim = this.state.pendingClaim;
-    if (!claim || claim.spotIds.length === 0) return { success: false, error: "Nothing selected." };
+    this.setState({ formErrors: {} });
 
     const stillHeld = claim.spotIds.every((id) => {
       const spot = this.state.spots.find((s) => s.id === id);
       return spot && (spot.status === "reserved" || spot.status === "available");
     });
     if (!stillHeld) {
-      return { success: false, error: "One of your selected spots is no longer available. Please pick again." };
+      const error = "That spot was just claimed by someone else. Pick another one.";
+      this.setState({ formErrors: { general: error } });
+      return { success: false, error };
     }
 
     const buyer = buildBuyer(claim);
@@ -249,7 +217,9 @@ export class AppStore {
 
     const result = await this.payments.simulatePayment(order.id, order.amount, order.currency);
     if (!result.success) {
-      return { success: false, error: result.error ?? "Payment failed. Please try again." };
+      const error = result.error ?? "Something went wrong booking that spot. Please try again.";
+      this.setState({ formErrors: { general: error } });
+      return { success: false, error };
     }
 
     const now = Date.now();
@@ -319,7 +289,7 @@ export class AppStore {
   }
 
   closeClaimFlow(): void {
-    this.setState({ selectedSpotIds: [], claimStep: null, pendingClaim: null, formErrors: {} });
+    this.setState({ claimStep: null, pendingClaim: null, formErrors: {} });
   }
 
   cancelClaim(): void {
@@ -332,7 +302,7 @@ export class AppStore {
           claim.spotIds.includes(s.id) && s.status === "reserved" ? ({ ...s, status: "available" as const } satisfies Spot) : s,
         )
       : this.state.spots;
-    this.setState({ spots, selectedSpotIds: [], claimStep: null, pendingClaim: null, formErrors: {}, selectionMode: false });
+    this.setState({ spots, claimStep: null, pendingClaim: null, formErrors: {} });
   }
 
   private releaseExpiredReservations(now: number = Date.now()): void {
@@ -412,8 +382,6 @@ export class AppStore {
       campaign,
       spots: generateSpots(campaign.id),
       activity: [],
-      selectionMode: false,
-      selectedSpotIds: [],
       viewingSpotId: null,
       claimStep: null,
       pendingClaim: null,

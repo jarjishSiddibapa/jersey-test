@@ -1,9 +1,6 @@
 import type { LegalSlug } from "../types";
 import { LEGAL_PAGES } from "../data/legalContent";
-import { legalHash } from "../router";
 import { escapeHtml } from "../utils/formatting";
-
-const ALL_SLUGS: LegalSlug[] = ["terms", "privacy", "refunds", "contact", "content-policy"];
 
 export function renderLegalPage(slug: LegalSlug): string {
   const page = LEGAL_PAGES[slug];
@@ -18,15 +15,10 @@ export function renderLegalPage(slug: LegalSlug): string {
     )
     .join("");
 
-  const nav = ALL_SLUGS.map(
-    (s) => `<a href="${legalHash(s)}" class="${s === slug ? "legal-nav__link legal-nav__link--active" : "legal-nav__link"}">${escapeHtml(LEGAL_PAGES[s].title)}</a>`,
-  ).join("");
-
   return `
     <div class="legal-page">
       <div class="container legal-page__inner">
         <a href="#/" class="legal-back">&larr; Back to the jersey</a>
-        <nav class="legal-nav">${nav}</nav>
         <h1 class="legal-title">${escapeHtml(page.title)}</h1>
         <p class="legal-updated">Last updated ${escapeHtml(page.updated)}</p>
         ${sections}

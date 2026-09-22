@@ -77,7 +77,7 @@ export interface ActivityEntry {
   isDemo?: boolean;
 }
 
-export type ClaimStep = "selecting" | "form" | "checkout" | "success";
+export type ClaimStep = "form" | "success";
 
 export interface PendingClaim {
   spotIds: number[];
@@ -155,8 +155,6 @@ export interface AppState {
   campaign: Campaign;
   spots: Spot[];
   activity: ActivityEntry[];
-  selectionMode: boolean;
-  selectedSpotIds: number[];
   viewingSpotId: number | null;
   claimStep: ClaimStep | null;
   pendingClaim: PendingClaim | null;
@@ -173,4 +171,4 @@ export type Route =
   | { name: "spot"; id: number }
   | { name: "legal"; slug: LegalSlug };
 
-export type LegalSlug = "terms" | "privacy" | "refunds" | "contact" | "content-policy";
+export type LegalSlug = "rules";

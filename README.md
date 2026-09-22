@@ -1,14 +1,15 @@
-# The Internet Jersey
+# claim.lol
 
-200 spots. One jersey. Every claim makes the next one more expensive.
+200 spots. One jersey. Every claim makes the next one pricier.
 
 Live: https://jarjishsiddibapa.github.io/jersey-test/
 
 ## What this is right now
 
 A polished, fully-functional **prototype**: real pricing logic, real spot
-geometry, real client-side validation, a real (simulated) checkout you can
-actually complete, public shareable spot pages, and an architecture
+geometry, real client-side validation, a real booking flow you can
+actually complete end to end (one spot per claim - fill the form, click
+Book, it's yours), public shareable spot pages, and an architecture
 already shaped like the production system described below - but with no
 live database, no live payment provider, no live email, and no real
 object storage. Persistence is per-browser `localStorage`. See
@@ -41,10 +42,13 @@ finalPrice(spot)     = basePriceForRank(spot.purchaseRank) * TIER_MULTIPLIER[spo
 
 `startingPrice = $0.10`, `growthRate = 0.06` (+6% per claim, edition-wide -
 not per tier, not per day), no cap. Tier multipliers: standard 1x,
-premium 3x, hero 5x. There is ONE global purchase-rank counter; every
-spot in a multi-spot checkout consumes its own sequential rank. See
-`src/services/pricing.ts` and its test file for the exact formulas and
-worked examples.
+premium 3x, hero 5x. There is ONE global purchase-rank counter, shared
+across every spot claimed regardless of tier. The UI only lets a visitor
+claim one spot at a time; `priceSelection()` (in `src/services/pricing.ts`)
+is written to price an array of spot ids so the same rank logic can back
+a multi-spot checkout later without a rewrite, but nothing in the UI
+exposes that today. See `src/services/pricing.ts` and its test file for
+the exact formulas and worked examples.
 
 ## Architecture-ready, not wired
 
@@ -207,8 +211,11 @@ ADMIN_SESSION_SECRET     # once real admin auth exists
 3. Implement the webhook endpoint, verifying `X-Razorpay-Signature`
    against `RAZORPAY_WEBHOOK_SECRET` before trusting the payload.
 4. Replace `MockPaymentProvider` with a real `RazorpayPaymentProvider`
-   in `src/state/appState.ts` (one line) - `confirmPayment()` and every
-   caller already expect the same `PaymentProvider` interface.
+   in `src/state/appState.ts` (one line) - `bookSpot()` and every caller
+   already expect the same `PaymentProvider` interface. Note that wiring
+   a real provider also means the UI needs an actual payment step again
+   (today `bookSpot()` finalizes the claim directly, since there's
+   nothing real to collect yet).
 5. Move price calculation server-side: the webhook handler should
    recompute the order amount from the authoritative current rank, not
    trust anything the client sent.
@@ -247,21 +254,23 @@ backend env vars above as repository/host secrets, not in the repo.
 
 ## Test checklist
 
-- [x] `npm test` - 36 automated tests: spot generation invariants (exact
+- [x] `npm test` - 35 automated tests: spot generation invariants (exact
       200, sequential IDs, 160/28/12 tier split, no overlaps, silhouette
       safety), pricing formula against the spec's worked examples,
-      sequential rank consumption across multi-spot checkouts, every
-      claim-form validation (name/email/website/length/terms), XSS/
-      attribute-injection resistance, logo upload MIME+signature+size
-      validation, double-claim rejection, reservation release on cancel.
+      sequential rank consumption across one-spot-at-a-time bookings,
+      every claim-form validation (name/email/website/length/rules
+      agreement), XSS/attribute-injection resistance, logo upload
+      MIME+signature+size validation, double-claim rejection, reservation
+      release on cancel.
 - [x] `npx tsc --noEmit` - clean, strict mode.
 - [x] `npm run build` - clean production build.
-- [x] Manually verified in-browser: single-spot claim flow, multi-spot
-      (3-spot) claim flow with correct sequential ranks and price
-      breakdown, payment simulation, success panel, public spot page via
-      hash routing, outbound click tracking, legal pages, 404 spot
-      handling, inline validation errors, Escape-to-cancel releases the
-      reservation, keyboard Enter/Space activation, modal focus trap,
+- [x] Manually verified in-browser: single-spot claim-to-book flow
+      (select a spot, fill the form, submit, land straight on the success
+      panel - no separate checkout/payment screen), sequential rank
+      pricing across consecutive bookings, success panel, public spot
+      page via hash routing, outbound click tracking, the Rules page, 404
+      spot handling, inline validation errors, Escape-to-cancel releases
+      the reservation, keyboard Enter/Space activation, modal focus trap,
       mobile viewport (375px) with no horizontal scroll and a
       non-overlapping sticky CTA, dev-tools panel + moderation
       approve/reject (dev mode only).
@@ -292,11 +301,12 @@ backend env vars above as repository/host secrets, not in the repo.
    every route. Real per-spot social previews need either prerendering
    at build time or a small server - both require the backend that
    doesn't exist yet.
-5. **No legal review.** The Terms/Privacy/Refunds/Content Policy pages
-   are real, considered content - not placeholders - but have not been
-   reviewed by a lawyer. Get that review before taking real money.
+5. **No legal review.** The Rules page is real, considered content - not
+   a placeholder - but it's intentionally lightweight (pricing, what you
+   can submit, moderation) and has not been reviewed by a lawyer. Get a
+   proper Terms/Privacy review before taking real money.
 6. **No rate limiting / bot protection** on the (currently client-only)
-   checkout flow - relevant once a real payment endpoint exists.
+   booking flow - relevant once a real payment endpoint exists.
 
 ## What still requires manual configuration
 
@@ -311,16 +321,16 @@ variables, never committed to the repo.
 
 Exactly 200 spots (160/28/12 tier split) ✅ &middot; $0.10 start / 6%
 growth / no cap ✅ &middot; current price from... this browser's own
-state, not a real server ⚠️ &middot; payment is simulated, not real ⚠️
-&middot; reservations exist but don't stop cross-browser double-claims ⚠️
-&middot; logos are securely validated client-side, not centrally moderated
-⚠️ &middot; public spot pages ✅ &middot; sharing ✅ &middot; analytics
-scaffold (console-only) ⚠️ &middot; referral attribution capture ✅
-&middot; legal pages ✅ (un-reviewed) &middot; admin auth ❌ &middot;
-prototype tools absent from production build ✅ &middot; fake buyers/
-activity/scarcity absent from production ✅ &middot; mobile ✅ &middot;
-keyboard access ✅ &middot; automated tests passing ✅ &middot; build
-passing ✅ &middot; deployment passing ✅.
+state, not a real server ⚠️ &middot; booking is simulated, no real money
+moves ⚠️ &middot; reservations exist but don't stop cross-browser
+double-claims ⚠️ &middot; logos are securely validated client-side, not
+centrally moderated ⚠️ &middot; public spot pages ✅ &middot; sharing ✅
+&middot; analytics scaffold (console-only) ⚠️ &middot; referral
+attribution capture ✅ &middot; Rules page ✅ (un-reviewed) &middot; admin
+auth ❌ &middot; prototype tools absent from production build ✅ &middot;
+fake buyers/activity/scarcity absent from production ✅ &middot; mobile ✅
+&middot; keyboard access ✅ &middot; automated tests passing ✅ &middot;
+build passing ✅ &middot; deployment passing ✅.
 
 **This is a trustworthy, well-tested prototype with production-shaped
 architecture. It is not yet a live, transactional product** - that

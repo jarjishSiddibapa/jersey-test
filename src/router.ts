@@ -1,6 +1,6 @@
 import type { LegalSlug, Route } from "./types";
 
-const LEGAL_SLUGS: LegalSlug[] = ["terms", "privacy", "refunds", "contact", "content-policy"];
+const LEGAL_SLUGS: LegalSlug[] = ["rules"];
 
 /**
  * Hash-based routing (#/spot/37, #/terms, ...) rather than real paths:
@@ -29,8 +29,4 @@ export function parseHash(hash: string = window.location.hash): Route {
 
 export function spotHash(spotId: number): string {
   return `#/spot/${spotId}`;
-}
-
-export function legalHash(slug: LegalSlug): string {
-  return `#/${slug}`;
 }

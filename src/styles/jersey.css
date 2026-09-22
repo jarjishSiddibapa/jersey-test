@@ -99,17 +99,17 @@
   transform: scale(1.04);
 }
 
-.jersey-spot--available.jersey-spot--selectable {
+.jersey-spot--available {
   cursor: pointer;
 }
 
-.jersey-spot--available.jersey-spot--selectable .jersey-spot-shape {
+.jersey-spot--available .jersey-spot-shape {
   fill: rgba(183, 255, 0, 0.05);
   stroke: rgba(183, 255, 0, 0.18);
 }
 
-.jersey-spot--available.jersey-spot--selectable:hover .jersey-spot-shape,
-.jersey-spot--available.jersey-spot--selectable:focus-visible .jersey-spot-shape {
+.jersey-spot--available:hover .jersey-spot-shape,
+.jersey-spot--available:focus-visible .jersey-spot-shape {
   fill: rgba(183, 255, 0, 0.16);
   stroke: var(--color-accent);
   transform: scale(1.05);
@@ -127,13 +127,13 @@
   stroke-width: 1.75;
 }
 
-.jersey-spot--tier-premium.jersey-spot--selectable:hover .jersey-spot-shape,
-.jersey-spot--tier-premium.jersey-spot--selectable:focus-visible .jersey-spot-shape {
+.jersey-spot--available.jersey-spot--tier-premium:hover .jersey-spot-shape,
+.jersey-spot--available.jersey-spot--tier-premium:focus-visible .jersey-spot-shape {
   filter: drop-shadow(0 0 6px rgba(183, 255, 0, 0.35));
 }
 
-.jersey-spot--tier-hero.jersey-spot--selectable:hover .jersey-spot-shape,
-.jersey-spot--tier-hero.jersey-spot--selectable:focus-visible .jersey-spot-shape {
+.jersey-spot--available.jersey-spot--tier-hero:hover .jersey-spot-shape,
+.jersey-spot--available.jersey-spot--tier-hero:focus-visible .jersey-spot-shape {
   filter: drop-shadow(0 0 10px rgba(183, 255, 0, 0.5));
   stroke-width: 2.5;
 }
@@ -189,20 +189,4 @@
   font-weight: 700;
   pointer-events: none;
   letter-spacing: -0.01em;
-}
-
-/* selection mode pulse on hero jersey */
-
-.jersey-spots-pulse .jersey-spot--available.jersey-spot--selectable .jersey-spot-shape {
-  animation: pulse-available 1.8s ease-in-out infinite;
-}
-
-@keyframes pulse-available {
-  0%,
-  100% {
-    stroke-opacity: 1;
-  }
-  50% {
-    stroke-opacity: 0.4;
-  }
 }

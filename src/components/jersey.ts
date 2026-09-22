@@ -74,7 +74,6 @@ function truncateForWidth(name: string, width: number, fontSize: number): string
 export interface JerseyRenderOptions {
   highlightedIds?: Set<number>;
   dimUnhighlighted?: boolean;
-  selectionMode?: boolean;
   selectedSpotIds?: number[];
   justClaimedSpotIds?: number[];
   idPrefix?: string;
@@ -97,7 +96,6 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
   const {
     highlightedIds,
     dimUnhighlighted,
-    selectionMode,
     selectedSpotIds,
     justClaimedSpotIds,
     idPrefix = "j",
@@ -113,7 +111,6 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
         `jersey-spot--${spot.region}`,
         `jersey-spot--tier-${spot.tier}`,
       ];
-      if (selectionMode && spot.status === "available") classes.push("jersey-spot--selectable");
       if (selectedSpotIds?.includes(spot.id)) classes.push("jersey-spot--selected");
       if (justClaimedSpotIds?.includes(spot.id)) classes.push("jersey-spot--just-claimed");
       if (highlightedIds) {
@@ -172,7 +169,7 @@ export function renderJerseyInner(spots: Spot[], options: JerseyRenderOptions = 
       <path d="${JERSEY_PATH}" class="jersey-outline" />
       <path d="${COLLAR_PATH}" class="jersey-collar" />
       <text x="500" y="660" class="jersey-number" text-anchor="middle">01</text>
-      <text x="762" y="95" class="jersey-mark" text-anchor="start">IJ</text>
+      <text x="762" y="95" class="jersey-mark" text-anchor="start">C</text>
       <g class="jersey-spots">${spotNodes}</g>`;
 }
 
@@ -182,6 +179,6 @@ export function renderJerseySvg(spots: Spot[], options: JerseyRenderOptions = {}
       viewBox="0 0 ${JERSEY_VIEWBOX.width} ${JERSEY_VIEWBOX.height}"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="The Internet Jersey"
+      aria-label="The jersey"
     >${renderJerseyInner(spots, options)}</svg>`;
 }

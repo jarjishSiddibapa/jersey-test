@@ -2,7 +2,6 @@ import type { AppState } from "../types";
 import { renderJerseySvg } from "./jersey";
 import { getClaimedSpots } from "../services/pricing";
 import { escapeHtml } from "../utils/formatting";
-import { MAX_SELECTION } from "../state/appState";
 
 export function renderExplorer(state: AppState): string {
   const query = state.searchQuery.trim().toLowerCase();
@@ -20,28 +19,13 @@ export function renderExplorer(state: AppState): string {
 
   const matchCount = matches ? matches.size : null;
   const claimedCount = getClaimedSpots(state.spots).length;
-  const selectedCount = state.selectedSpotIds.length;
-
-  const banner = state.selectionMode
-    ? `<div class="selection-banner">
-        <span>${
-          selectedCount === 0
-            ? `Choose your spots &mdash; click any open square on the jersey (up to ${MAX_SELECTION}).`
-            : `${selectedCount} spot${selectedCount === 1 ? "" : "s"} selected.`
-        }</span>
-        <span class="selection-banner__actions">
-          ${selectedCount > 0 ? `<button data-action="confirm-multi-select">Continue</button>` : ""}
-          <button data-action="cancel-selection">Cancel</button>
-        </span>
-      </div>`
-    : "";
 
   return `
     <section class="section" id="explorer">
       <div class="container">
         <p class="section-eyebrow">The jersey</p>
         <h2 class="section-title">Who's on it?</h2>
-        <p class="section-subtitle">Every name below claimed their place. Click any spot to see who owns it, or claim an open one.</p>
+        <p class="section-subtitle">Every name below claimed their place. Click any open square to book it.</p>
 
         <div class="explorer-search">
           <input
@@ -58,15 +42,10 @@ export function renderExplorer(state: AppState): string {
           }
         </div>
 
-        ${state.selectionMode ? "" : `<button class="btn btn-ghost" data-action="enter-multi-select" style="margin-bottom:18px;">Select multiple spots</button>`}
-        ${banner}
-
-        <div class="jersey-stage${state.selectionMode ? " jersey-spots-pulse" : ""}" data-role="jersey-stage">
+        <div class="jersey-stage" data-role="jersey-stage">
           ${renderJerseySvg(state.spots, {
             idPrefix: "explorer",
             highlightedIds: matches,
-            selectionMode: state.selectionMode,
-            selectedSpotIds: state.selectedSpotIds,
             justClaimedSpotIds: state.claimStep === "success" ? (state.pendingClaim?.spotIds ?? []) : [],
           })}
         </div>

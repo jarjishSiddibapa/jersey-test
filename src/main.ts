@@ -19,9 +19,8 @@ import { renderFomo } from "./components/fomo";
 import { renderHowItWorks } from "./components/howItWorks";
 import { renderExplorer } from "./components/explorer";
 import { renderLeaderboard } from "./components/leaderboard";
-import { renderAbout } from "./components/about";
 import { renderFooter } from "./components/footer";
-import { renderClaimForm, renderClaimCheckout } from "./components/claimModal";
+import { renderClaimForm } from "./components/claimModal";
 import { renderSuccessPanel } from "./components/successModal";
 import { renderSpotProfile } from "./components/spotProfile";
 import { renderDevTools } from "./components/devTools";
@@ -40,17 +39,17 @@ window.addEventListener("hashchange", () => store.setRoute(parseHash()));
 function updateMetaTags(): void {
   const state = store.getState();
   const route = state.route;
-  let title = "The Internet Jersey — Own a Spot on the Internet";
-  let description = "200 spots. One jersey. Every claim makes the next one more expensive.";
+  let title = "claim.lol — claim a spot on the jersey";
+  let description = "200 spots on one jersey. Every claim makes the next one pricier.";
 
   if (route.name === "spot") {
     const spot = state.spots.find((s) => s.id === route.id);
     if (spot?.status === "claimed") {
-      title = `Spot #${spot.id} — The Internet Jersey`;
-      description = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on The Internet Jersey.`;
+      title = `Spot #${spot.id} — claim.lol`;
+      description = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on claim.lol.`;
     }
   } else if (route.name === "legal") {
-    title = `${route.slug} — The Internet Jersey`;
+    title = `${route.slug} — claim.lol`;
   }
 
   document.title = title;
@@ -89,9 +88,6 @@ function renderOverlay(): string {
   if (state.claimStep === "form") {
     return `<div class="overlay" data-role="overlay">${renderClaimForm(state)}</div>`;
   }
-  if (state.claimStep === "checkout") {
-    return `<div class="overlay" data-role="overlay">${renderClaimCheckout(state)}</div>`;
-  }
   if (state.claimStep === "success") {
     return `<div class="overlay" data-role="overlay">${renderSuccessPanel(state)}</div>`;
   }
@@ -127,7 +123,6 @@ function renderHome(state: ReturnType<typeof store.getState>): string {
     ${renderHowItWorks()}
     ${renderExplorer(state)}
     ${renderLeaderboard(state)}
-    ${renderAbout()}
   `;
 }
 
@@ -273,12 +268,8 @@ function activateSpot(spotId: number): void {
   const state = store.getState();
   const spot = state.spots.find((s) => s.id === spotId);
   if (spot?.status === "available") {
-    if (state.selectionMode) {
-      store.toggleSpotSelection(spotId);
-    } else {
-      store.selectSingleSpot(spotId);
-      analytics.track("spot_selected", { spotId });
-    }
+    store.selectSingleSpot(spotId);
+    analytics.track("spot_selected", { spotId });
   } else if (spot?.status === "claimed") {
     store.viewSpot(spotId);
     store.trackProfileView(spotId);
@@ -309,28 +300,11 @@ document.addEventListener("click", (e) => {
     case "explore-jersey":
       scrollToExplorer();
       break;
-    case "enter-multi-select":
-      store.enterSelectionMode();
-      scrollToExplorer();
-      break;
-    case "cancel-selection":
-      store.exitSelectionMode();
-      break;
-    case "confirm-multi-select":
-      store.confirmMultiSelection();
-      analytics.track("checkout_started");
-      break;
     case "close-claim":
       store.cancelClaim();
       break;
     case "close-spot-profile":
       store.closeSpotProfile();
-      break;
-    case "back-to-form":
-      store.backToForm();
-      break;
-    case "simulate-payment":
-      void handlePayment();
       break;
     case "remove-logo":
       store.updatePendingClaim({ logoUrl: undefined });
@@ -449,7 +423,7 @@ document.addEventListener("submit", (e) => {
     tagline: taglineInput?.value.trim() ?? "",
     agreedToTerms: termsInput?.checked ?? false,
   });
-  store.goToCheckout();
+  void handleBooking();
 });
 
 // ---------------- Logo upload ----------------
@@ -509,18 +483,16 @@ document.addEventListener("drop", (e) => {
   if (file) void handleLogoFile(file);
 });
 
-// ---------------- Payment ----------------
+// ---------------- Booking ----------------
 
-async function handlePayment(): Promise<void> {
-  analytics.track("payment_started");
-  const result = await store.confirmPayment();
+async function handleBooking(): Promise<void> {
+  analytics.track("booking_started");
+  const result = await store.bookSpot();
   if (result.success) {
-    analytics.track("payment_succeeded");
-    return;
+    analytics.track("booking_succeeded");
+  } else if (result.error) {
+    analytics.track("booking_failed", { error: result.error });
   }
-  analytics.track("payment_failed", { error: result.error });
-  const errorEl = document.querySelector<HTMLElement>('[data-role="checkout-error"]');
-  if (errorEl) errorEl.textContent = result.error ?? "Payment failed. Please try again.";
 }
 
 // ---------------- Share ----------------
@@ -529,7 +501,7 @@ async function copyOrShare(message: string, url: string): Promise<void> {
   const shareText = `${message} ${url}`;
   if (navigator.share) {
     try {
-      await navigator.share({ text: message, url, title: "The Internet Jersey" });
+      await navigator.share({ text: message, url, title: "claim.lol" });
       return;
     } catch {
       // user cancelled the native share sheet; fall through to clipboard
@@ -551,16 +523,12 @@ async function copyOrShare(message: string, url: string): Promise<void> {
 
 async function handleShare(): Promise<void> {
   const state = store.getState();
-  const spotIds = state.pendingClaim?.spotIds ?? [];
-  const first = spotIds[0];
-  if (first === undefined) return;
-  const spot = state.spots.find((s) => s.id === first);
+  const spotId = state.pendingClaim?.spotIds[0];
+  if (spotId === undefined) return;
+  const spot = state.spots.find((s) => s.id === spotId);
   if (!spot) return;
 
-  const message =
-    spotIds.length > 1
-      ? `I just claimed ${spotIds.length} spots on The Internet Jersey.`
-      : `I just claimed Spot #${spot.id} on The Internet Jersey.`;
+  const message = `I just claimed Spot #${spot.id} on claim.lol.`;
   await copyOrShare(message, spotPublicUrl(spot.id));
   analytics.track("spot_shared", { spotId: spot.id });
 }
@@ -569,7 +537,7 @@ async function handleSpotPageShare(spotId: number): Promise<void> {
   const state = store.getState();
   const spot = state.spots.find((s) => s.id === spotId);
   if (!spot) return;
-  const message = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on The Internet Jersey.`;
+  const message = `${spot.buyerName ?? "Someone"} owns Spot #${spot.id} on claim.lol.`;
   await copyOrShare(message, spotPublicUrl(spot.id));
   analytics.track("spot_shared", { spotId });
 }
@@ -582,7 +550,6 @@ document.addEventListener("keydown", (e) => {
     if (state.claimStep) store.cancelClaim();
     else if (state.viewingSpotId !== null) store.closeSpotProfile();
     else if (state.devToolsOpen) store.closeDevTools();
-    else if (state.selectionMode) store.exitSelectionMode();
   }
 
   const overlay = root.querySelector<HTMLElement>('[data-role="overlay"]');

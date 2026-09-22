@@ -28,7 +28,7 @@ export function renderCharacterSvg(spots: Spot[], options: JerseyRenderOptions =
       viewBox="0 0 ${CHAR_WIDTH} ${CHAR_HEIGHT}"
       xmlns="http://www.w3.org/2000/svg"
       role="img"
-      aria-label="A faceless character wearing The Internet Jersey"
+      aria-label="A faceless character wearing the jersey"
     >
       <circle class="character-head" cx="500" cy="70" r="58" />
       <rect class="character-neck" x="465" y="95" width="70" height="90" rx="10" />

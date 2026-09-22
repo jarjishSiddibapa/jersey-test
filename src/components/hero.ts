@@ -29,8 +29,6 @@ export function renderHero(state: AppState): string {
           <div class="hero__glow" aria-hidden="true"></div>
           ${renderCharacterSvg(state.spots, {
             idPrefix: "hero",
-            selectionMode: false,
-            selectedSpotIds: state.selectedSpotIds,
             justClaimedSpotIds: state.claimStep === "success" ? (state.pendingClaim?.spotIds ?? []) : [],
             // decorative only - the interactive jersey (search, hover
             // pricing, click-to-claim) lives in the explorer section
@@ -42,12 +40,12 @@ export function renderHero(state: AppState): string {
 
         <div class="hero__copy">
           <p class="hero__eyebrow"><span class="live-dot"></span> ${eyebrow}</p>
-          <h1 class="hero__title">${soldOut ? "Every spot has been claimed." : "Own a spot on the internet."}</h1>
+          <h1 class="hero__title">${soldOut ? "Every spot has been claimed." : "Own a spot on the jersey."}</h1>
           <p class="hero__subtitle">
             ${
               soldOut
                 ? "Every spot on this jersey is taken. Explore who's on it."
-                : "200 spots. One jersey. Every claim makes the next one more expensive."
+                : "200 spots. Every claim makes the next one pricier."
             }
           </p>
           ${actions}

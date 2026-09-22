@@ -43,32 +43,32 @@ test("claiming an available spot opens the form with the right spot selected", (
   assert.equal(store.getState().spots.find((s) => s.id === 1)?.status, "reserved");
 });
 
-test("goToCheckout rejects an empty name", () => {
+test("bookSpot rejects an empty name", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({ buyerName: "", email: "a@b.com", agreedToTerms: true });
-  store.goToCheckout();
+  await store.bookSpot();
   assert.ok(store.getState().formErrors.buyerName);
   assert.equal(store.getState().claimStep, "form");
 });
 
-test("goToCheckout rejects an invalid email", () => {
+test("bookSpot rejects an invalid email", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({ buyerName: "Acme", email: "not-an-email", agreedToTerms: true });
-  store.goToCheckout();
+  await store.bookSpot();
   assert.ok(store.getState().formErrors.email);
 });
 
-test("goToCheckout rejects a dangerous website URL", () => {
+test("bookSpot rejects a dangerous website URL", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({ buyerName: "Acme", email: "a@b.com", website: "javascript:alert(1)", agreedToTerms: true });
-  store.goToCheckout();
+  await store.bookSpot();
   assert.ok(store.getState().formErrors.website);
 });
 
-test("goToCheckout rejects an over-length name/company/tagline", () => {
+test("bookSpot rejects an over-length name/company/tagline", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({
@@ -76,19 +76,19 @@ test("goToCheckout rejects an over-length name/company/tagline", () => {
     email: "a@b.com",
     agreedToTerms: true,
   });
-  store.goToCheckout();
+  await store.bookSpot();
   assert.ok(store.getState().formErrors.buyerName);
 });
 
-test("goToCheckout rejects checkout without agreeing to terms", () => {
+test("bookSpot rejects booking without agreeing to the rules", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({ buyerName: "Acme", email: "a@b.com", agreedToTerms: false });
-  store.goToCheckout();
+  await store.bookSpot();
   assert.ok(store.getState().formErrors.agreedToTerms);
 });
 
-test("a fully valid submission advances to checkout with no errors", () => {
+test("a fully valid submission books the spot immediately - no separate checkout step", async () => {
   const store = freshStore();
   store.selectSingleSpot(1);
   store.updatePendingClaim({
@@ -99,17 +99,18 @@ test("a fully valid submission advances to checkout with no errors", () => {
     tagline: "",
     agreedToTerms: true,
   });
-  store.goToCheckout();
+  const result = await store.bookSpot();
+  assert.equal(result.success, true);
   assert.deepEqual(store.getState().formErrors, {});
-  assert.equal(store.getState().claimStep, "checkout");
+  assert.equal(store.getState().claimStep, "success");
+  assert.equal(store.getState().spots.find((s) => s.id === 1)?.status, "claimed");
 });
 
 test("a spot can only be claimed once end-to-end, and a stale reservation is rejected", async () => {
   const store = freshStore();
   store.selectSingleSpot(5);
   store.updatePendingClaim({ buyerName: "First", email: "first@x.com", agreedToTerms: true });
-  store.goToCheckout();
-  const first = await store.confirmPayment();
+  const first = await store.bookSpot();
   assert.equal(first.success, true);
   assert.equal(store.getState().spots.find((s) => s.id === 5)?.status, "claimed");
 
@@ -129,26 +130,21 @@ test("cancelling a claim releases the reservation back to available", () => {
   assert.equal(store.getState().claimStep, null);
 });
 
-test("multi-select respects the selection cap and toggles membership", () => {
+test("purchase rank advances sequentially as spots are booked one at a time", async () => {
   const store = freshStore();
-  store.enterSelectionMode();
-  store.toggleSpotSelection(1);
-  store.toggleSpotSelection(2);
-  store.toggleSpotSelection(1); // toggled off
-  assert.deepEqual(store.getState().selectedSpotIds, [2]);
-});
 
-test("purchase rank advances sequentially across a multi-spot checkout", async () => {
-  const store = freshStore();
-  store.enterSelectionMode();
-  store.toggleSpotSelection(10);
-  store.toggleSpotSelection(11);
-  store.toggleSpotSelection(12);
-  store.confirmMultiSelection();
-  store.updatePendingClaim({ buyerName: "Multi", email: "multi@x.com", agreedToTerms: true });
-  store.goToCheckout();
-  const result = await store.confirmPayment();
-  assert.equal(result.success, true);
+  store.selectSingleSpot(10);
+  store.updatePendingClaim({ buyerName: "First", email: "first@x.com", agreedToTerms: true });
+  await store.bookSpot();
+
+  store.selectSingleSpot(11);
+  store.updatePendingClaim({ buyerName: "Second", email: "second@x.com", agreedToTerms: true });
+  await store.bookSpot();
+
+  store.selectSingleSpot(12);
+  store.updatePendingClaim({ buyerName: "Third", email: "third@x.com", agreedToTerms: true });
+  await store.bookSpot();
+
   const ranks = [10, 11, 12].map((id) => store.getState().spots.find((s) => s.id === id)?.purchaseRank);
   assert.deepEqual(ranks, [1, 2, 3]);
 });
