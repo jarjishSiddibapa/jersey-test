@@ -295,7 +295,7 @@ textarea {
 }
 
 .hero__visual .character-svg {
-  width: min(100%, 460px);
+  width: min(100%, 620px);
 }
 
 /* ---------------- Price card ---------------- */
@@ -1409,7 +1409,8 @@ textarea {
 
 @media (min-width: 900px) {
   .hero__grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    gap: 24px;
   }
 }
 

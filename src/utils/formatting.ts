@@ -1,9 +1,12 @@
 export function formatPrice(amount: number, currency = "USD"): string {
+  // Below $1, gentle daily compounding can move the price by fractions of
+  // a cent; showing up to 4 decimals keeps day-to-day change visible
+  // instead of every early price rounding down to the same "$0.01".
   const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
-    minimumFractionDigits: amount < 1 ? 2 : 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: amount < 1 ? 4 : 2,
   });
   return formatter.format(amount);
 }

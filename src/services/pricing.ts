@@ -2,7 +2,11 @@ import type { PricingConfig, Spot } from "../types";
 
 export const DEFAULT_PRICING_CONFIG: PricingConfig = {
   basePrice: 0.01,
-  growthMultiplier: 2,
+  // A gentle daily compounding rate (not a doubling) so the price stays
+  // interesting for months instead of hitting the cap in under 3 weeks.
+  // ~8%/day roughly doubles every 9 days and reaches the $2,500 cap
+  // around day 160.
+  growthMultiplier: 1.08,
   pricingInterval: 24 * 60 * 60 * 1000,
   maximumPrice: null,
   currency: "USD",
@@ -28,7 +32,10 @@ export function getCurrentDay(
 
 export function getPriceForDay(config: PricingConfig, day: number): number {
   const raw = config.basePrice * Math.pow(config.growthMultiplier, day - 1);
-  const rounded = Math.round(raw * 100) / 100;
+  // Rounding to whole cents would hide several days of gentle compounding
+  // (1.08x/day doesn't clear a full cent for about a week) - round to a
+  // finer step instead so the price still visibly moves day to day.
+  const rounded = Math.round(raw * 10000) / 10000;
   if (config.maximumPrice !== null) return Math.min(rounded, config.maximumPrice);
   return rounded;
 }
