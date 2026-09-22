@@ -260,7 +260,7 @@ textarea {
 .hero__stage .jersey-svg {
   position: relative;
   z-index: 1;
-  width: min(100%, 640px);
+  width: min(100%, 480px);
   filter: drop-shadow(0 24px 40px rgba(17, 17, 17, 0.16));
 }
 
@@ -1441,7 +1441,7 @@ textarea {
   }
 
   .hero__stage .jersey-svg {
-    width: min(100%, 720px);
+    width: min(100%, 560px);
   }
 }
 

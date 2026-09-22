@@ -1,10 +1,12 @@
 import type { Spot, SpotRegion } from "../types";
 
 /**
- * Jersey artwork coordinate system: 0-1000 wide, 0-700 tall.
- * Kept in sync with the silhouette path drawn in components/jersey.ts.
+ * Jersey artwork coordinate system: 0-1000 wide, 0-1150 tall - a proper
+ * portrait garment proportion (torso taller than it is wide), not the
+ * wide/squat 1000x700 box this used to be. Kept in sync with the
+ * silhouette path drawn in components/jersey.ts.
  */
-export const JERSEY_VIEWBOX = { width: 1000, height: 700 };
+export const JERSEY_VIEWBOX = { width: 1000, height: 1150 };
 
 interface RegionBounds {
   region: SpotRegion;
@@ -17,13 +19,15 @@ interface RegionBounds {
 
 // Bounding boxes sit safely inside the jersey silhouette (see jersey.ts),
 // leaving margin so the mosaic never crosses collar, armpit or hem edges.
+// The "lower" region in particular stops well above the hem stripe
+// (which sits at y 985-1001) so that decoration never overlaps spots.
 const REGIONS: RegionBounds[] = [
-  { region: "shoulder", x0: 262, y0: 62, x1: 378, y1: 128, count: 15 },
-  { region: "shoulder", x0: 622, y0: 62, x1: 738, y1: 128, count: 15 },
-  { region: "sleeve", x0: 112, y0: 112, x1: 248, y1: 258, count: 25 },
-  { region: "sleeve", x0: 752, y0: 112, x1: 888, y1: 258, count: 25 },
-  { region: "chest", x0: 302, y0: 142, x1: 698, y1: 372, count: 110 },
-  { region: "lower", x0: 262, y0: 382, x1: 738, y1: 618, count: 110 },
+  { region: "shoulder", x0: 300, y0: 96, x1: 418, y1: 158, count: 15 },
+  { region: "shoulder", x0: 582, y0: 96, x1: 700, y1: 158, count: 15 },
+  { region: "sleeve", x0: 158, y0: 158, x1: 268, y1: 308, count: 25 },
+  { region: "sleeve", x0: 732, y0: 158, x1: 842, y1: 308, count: 25 },
+  { region: "chest", x0: 322, y0: 178, x1: 678, y1: 478, count: 110 },
+  { region: "lower", x0: 292, y0: 498, x1: 708, y1: 958, count: 110 },
 ];
 
 const GAP = 9;
